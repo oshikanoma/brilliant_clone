@@ -31,7 +31,8 @@ function distribute(level) {
 }
 
 // Build four multiple-choice answers: the correct distributed form plus three
-// plausible distractors based on common distribution mistakes.
+// plausible distractors based on common distribution mistakes. Each distractor
+// carries a `why` so Bruh can explain exactly what went wrong if it's picked.
 function makeOptions(level) {
   const m = level.multiplier
   const [first, second] = level.inside
@@ -40,19 +41,36 @@ function makeOptions(level) {
   const correct = exprText(distribute(level))
 
   const candidates = [
-    [{ coef: m * a, varname: 'x' }, { coef: b, varname: '' }], // only distributed to first term
-    [{ coef: a, varname: 'x' }, { coef: m * b, varname: '' }], // only distributed to second term
-    [{ coef: m * a, varname: 'x' }, { coef: m + b, varname: '' }], // added instead of multiplied
-    [{ coef: m + a, varname: 'x' }, { coef: m * b, varname: '' }], // added to coefficient
-    [{ coef: m * a + b, varname: 'x' }, { coef: m * b, varname: '' }], // combined unlike terms
+    {
+      terms: [{ coef: m * a, varname: 'x' }, { coef: b, varname: '' }],
+      why: `You multiplied the x-term by ${m} but left the ${b} alone. The ${m} has to be shared with every term inside the parentheses, so the ${b} becomes ${m}×${b} = ${m * b}.`,
+    },
+    {
+      terms: [{ coef: a, varname: 'x' }, { coef: m * b, varname: '' }],
+      why: `You distributed the ${m} to the constant but not to the x-term. The ${m} multiplies everything inside, so ${a === 1 ? 'x' : a + 'x'} becomes ${m}×${a} = ${m * a}x.`,
+    },
+    {
+      terms: [{ coef: m * a, varname: 'x' }, { coef: m + b, varname: '' }],
+      why: `Careful — the ${m} multiplies the ${b}, it isn't added to it. ${m}×${b} = ${m * b}, not ${m} + ${b} = ${m + b}.`,
+    },
+    {
+      terms: [{ coef: m + a, varname: 'x' }, { coef: m * b, varname: '' }],
+      why: `The ${m} multiplies the coefficient ${a}, it isn't added to it. ${m}×${a} = ${m * a}x, not ${m} + ${a} = ${m + a}x.`,
+    },
+    {
+      terms: [{ coef: m * a + b, varname: 'x' }, { coef: m * b, varname: '' }],
+      why: `You can't merge the x-term and the plain number into one term — they aren't alike. Keep ${m * a}x and ${m * b} separate.`,
+    },
   ]
 
-  const opts = new Set([correct])
+  const byText = new Map([[correct, null]])
   for (const c of shuffle(candidates)) {
-    if (opts.size >= 4) break
-    opts.add(exprText(c))
+    if (byText.size >= 4) break
+    const text = exprText(c.terms)
+    if (!byText.has(text)) byText.set(text, c.why)
   }
-  return { correct, options: shuffle([...opts]) }
+  const options = shuffle([...byText.keys()].map((text) => ({ text, why: byText.get(text) })))
+  return { correct, options }
 }
 
 export default function DistributiveLesson({
@@ -223,17 +241,21 @@ export default function DistributiveLesson({
     )
   }
 
-  // ---- Feedback line ----
-  let feedbackClass = ''
-  let feedbackText = !built
+  // ---- Question (Bruh, top), step hint (bottom), result (under answers) ----
+  const questionText = level.instruction
+  const hintText = !built
     ? `Tap the ×${level.multiplier} button to stack each copy of the group.`
-    : 'The area is built — now pick the simplified expression.'
-  if (lastResult === 'wrong') {
-    feedbackClass = 'feedback--bad'
-    feedbackText = 'Not quite — count every tile in the area and try again.'
-  } else if (solved) {
-    feedbackClass = 'feedback--ok'
-    feedbackText = `✓ Correct! ${problemText(level)} = ${correct}.`
+    : 'The area is built — now pick the simplified expression below.'
+  let resultTone = null
+  let resultText = ''
+  if (solved) {
+    resultTone = 'ok'
+    resultText = `✓ Correct! ${problemText(level)} = ${correct}.`
+  } else if (lastResult === 'wrong') {
+    resultTone = 'bad'
+    const chosen = options.find((o) => o.text === choice)
+    resultText =
+      chosen?.why ?? 'Not quite — count every tile in the area, then multiply and try again.'
   }
 
   const canSubmit = built && !solved && choice != null
@@ -261,10 +283,11 @@ export default function DistributiveLesson({
           />
         </div>
         <h2>{level.title}</h2>
-        <p>{level.instruction}</p>
       </div>
 
       <main className="order">
+        <OwlSpeech text={<strong>{questionText}</strong>} tone="neutral" />
+
         <div className="distrib__expr" aria-label="Expression to distribute">
           <span className="distrib__mult">{level.multiplier}</span>
           <span className="distrib__paren">(</span>
@@ -332,24 +355,25 @@ export default function DistributiveLesson({
         <div className="choices" role="group" aria-label="Choose the simplified expression">
           {options.map((opt) => (
             <button
-              key={opt}
+              key={opt.text}
               type="button"
-              className={'choice' + (choice === opt ? ' choice--sel' : '')}
+              className={'choice' + (choice === opt.text ? ' choice--sel' : '')}
               disabled={!built || solved}
               onClick={() => {
-                setChoice(opt)
+                setChoice(opt.text)
                 setLastResult(null)
               }}
             >
-              {opt}
+              {opt.text}
             </button>
           ))}
         </div>
 
-        <OwlSpeech
-          text={feedbackText}
-          tone={feedbackClass === 'feedback--ok' ? 'ok' : feedbackClass === 'feedback--bad' ? 'bad' : 'neutral'}
-        />
+        {resultText && (
+          <p className={`answer-feedback answer-feedback--${resultTone}`} role="status" aria-live="polite">
+            {resultText}
+          </p>
+        )}
 
         <div className="controls">
           {!solved && groups > 0 && (
@@ -373,6 +397,8 @@ export default function DistributiveLesson({
             </button>
           )}
         </div>
+
+        {!solved && <p className="lesson-hint">{hintText}</p>}
       </main>
     </div>
   )

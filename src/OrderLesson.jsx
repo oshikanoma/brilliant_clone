@@ -15,6 +15,23 @@ const PEMDAS_ROWS = [
 ]
 const PEMDAS_ORDER = ['P', 'E', 'MD', 'AS']
 
+// Plain-language name for each PEMDAS category, used in Bruh's explanations.
+const CAT_NAME = {
+  P: 'whatever is inside the parentheses',
+  E: 'the exponent',
+  MD: 'multiplication and division',
+  AS: 'addition and subtraction',
+}
+
+// Describe the operation a step points at, e.g. "3 × 4".
+function describeStep(tokens, step) {
+  const a = tokens[step.opIdx - 1]
+  const b = tokens[step.opIdx + 1]
+  const aT = a.kind === 'num' ? a.value : a.raw
+  const bT = b.kind === 'num' ? b.value : b.raw
+  return `${aT} ${OP_DISPLAY[tokens[step.opIdx].raw]} ${bT}`
+}
+
 // Turn a level's flat expr (e.g. ['5','+','(', ...]) into id-tagged tokens.
 function makeTokens(expr) {
   return expr.map((raw) => {
@@ -359,27 +376,35 @@ export default function OrderLesson({ onBack, onPass, lessonTitle = 'Order of Op
     )
   }
 
-  // ---- Feedback line ----
-  let feedbackClass = ''
-  let feedbackText =
+  // ---- Question (Bruh, top), step hint (bottom), result (under answers) ----
+  const questionText = level.instruction
+  const hintText =
     level.mode === 'solve'
-      ? 'Work it out on the whiteboard, then enter your answer.'
+      ? 'Work it out on the whiteboard, then enter your answer below.'
       : 'Tap the part to evaluate next, then Submit.'
-  if (lastResult === 'wrong') {
-    feedbackClass = 'feedback--bad'
-    feedbackText =
-      level.mode === 'solve'
-        ? 'Not quite — check your work and try again.'
-        : 'Not quite — check the PEMDAS order and try again.'
-  } else if (solved) {
-    feedbackClass = 'feedback--ok'
-    feedbackText =
+  let resultTone = null
+  let resultText = ''
+  if (solved) {
+    resultTone = 'ok'
+    resultText =
       level.mode === 'solve'
         ? `✓ Correct! The answer is ${solveAnswer}.`
         : `✓ Fully simplified! The answer is ${tokens[0].value}.`
+  } else if (lastResult === 'wrong') {
+    resultTone = 'bad'
+    if (level.mode === 'solve') {
+      const fs = nextStep(tokens)
+      resultText = fs
+        ? `Not quite. Follow PEMDAS — the very first thing to simplify here is ${describeStep(tokens, fs)} (${CAT_NAME[fs.category]}). Do the steps in that order and try again.`
+        : 'Not quite — recheck your arithmetic and try again.'
+    } else if (step) {
+      resultText = `Not yet — by PEMDAS you should handle ${CAT_NAME[step.category]} next, which means evaluating ${describeStep(tokens, step)}. Tap exactly that part${step.parenIds ? ' (you can include its parentheses too)' : ''}.`
+    } else {
+      resultText = 'Not quite — check the PEMDAS order and try again.'
+    }
   } else if (lastResult === 'correct') {
-    feedbackClass = 'feedback--ok'
-    feedbackText = '✓ Nice — that part is simplified.'
+    resultTone = 'ok'
+    resultText = '✓ Nice — that part is simplified.'
   }
 
   const canSubmit =
@@ -408,10 +433,11 @@ export default function OrderLesson({ onBack, onPass, lessonTitle = 'Order of Op
           />
         </div>
         <h2>{level.title}</h2>
-        <p>{level.instruction}</p>
       </div>
 
       <main className="order">
+        <OwlSpeech text={<strong>{questionText}</strong>} tone="neutral" />
+
         {level.mode === 'solve' ? (
           <>
             <div className="eq eq--readonly">
@@ -489,10 +515,11 @@ export default function OrderLesson({ onBack, onPass, lessonTitle = 'Order of Op
           </div>
         )}
 
-        <OwlSpeech
-          text={feedbackText}
-          tone={feedbackClass === 'feedback--ok' ? 'ok' : feedbackClass === 'feedback--bad' ? 'bad' : 'neutral'}
-        />
+        {resultText && (
+          <p className={`answer-feedback answer-feedback--${resultTone}`} role="status" aria-live="polite">
+            {resultText}
+          </p>
+        )}
 
         <div className="controls">
           {!solved && (
@@ -516,6 +543,8 @@ export default function OrderLesson({ onBack, onPass, lessonTitle = 'Order of Op
             </button>
           )}
         </div>
+
+        {!solved && <p className="lesson-hint">{hintText}</p>}
       </main>
     </div>
   )

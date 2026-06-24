@@ -89,7 +89,7 @@ export default function LessonPath({
         {name && <p className="path__greeting">Let’s go, {name} 👋</p>}
         {streak > 0 && (
           <p className="path__streak" aria-label={`${streak} day login streak`}>
-            🔥 {streak}-day streak
+            🏆 {streak}-day streak
           </p>
         )}
       </header>

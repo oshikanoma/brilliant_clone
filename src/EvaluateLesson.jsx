@@ -31,35 +31,53 @@ function correctAnswer(level) {
   return evalWith(level, trueTermVal(level))
 }
 
-// Build four answer choices: the correct value plus three plausible mistakes.
+// Value the student gets if they ADD the coefficient and value instead of
+// multiplying them (a classic mistake), and if they IGNORE the coefficient.
+const addMistakeValue = (level) =>
+  evalWith(level, (t) => (t.varname === '' ? t.coef : t.coef + level.values[t.varname]))
+const ignoreMistakeValue = (level) =>
+  evalWith(level, (t) => (t.varname === '' ? t.coef : level.values[t.varname]))
+
+// A representative variable term, used to phrase explanations with real numbers.
+function sampleVarTerm(level) {
+  const t = level.terms.find((tt) => tt.varname !== '')
+  if (!t) return null
+  return { c: t.coef, v: level.values[t.varname], name: t.varname }
+}
+
+// Explanation for a specific wrong value the student gave (choice or typed).
+function wrongWhy(level, given) {
+  const s = sampleVarTerm(level)
+  if (s) {
+    const chip = s.c === 1 ? s.name : `${s.c}${s.name}`
+    if (given === addMistakeValue(level))
+      return `It looks like you added the coefficient and the value. ${chip} means ${s.c}×${s.v} = ${s.c * s.v}, not ${s.c} + ${s.v}.`
+    if (given === ignoreMistakeValue(level))
+      return `Don't drop the coefficient — ${chip} means ${s.c}×${s.v} = ${s.c * s.v}, not just ${s.v}.`
+  }
+  return 'Not quite. Substitute each value, multiply it by the coefficient in front, then work left to right.'
+}
+
+// Build four answer choices: the correct value plus three plausible mistakes,
+// each carrying a `why` so Bruh can explain a wrong pick.
 function makeOptions(level) {
   const correct = correctAnswer(level)
-  const opts = new Set([correct])
+  const byVal = new Map([[correct, null]])
 
-  const candidates = [
-    // Added the coefficient and the value instead of multiplying them.
-    evalWith(level, (t) => (t.varname === '' ? t.coef : t.coef + level.values[t.varname])),
-    // Ignored the coefficient entirely (treated it as 1).
-    evalWith(level, (t) => (t.varname === '' ? t.coef : level.values[t.varname])),
-    correct + level.values[level.terms[0].varname] || correct + 2,
-    correct + 2,
-    correct - 2,
-    correct + 1,
-    correct - 1,
-    correct + 3,
-  ]
+  const labeled = [addMistakeValue(level), ignoreMistakeValue(level)]
+  const fillers = [correct + 2, correct - 2, correct + 1, correct - 1, correct + 3]
 
-  for (const c of candidates) {
-    if (opts.size >= 4) break
-    if (Number.isInteger(c) && c > 0 && c !== correct) opts.add(c)
+  for (const c of [...labeled, ...fillers]) {
+    if (byVal.size >= 4) break
+    if (Number.isInteger(c) && c > 0 && !byVal.has(c)) byVal.set(c, wrongWhy(level, c))
   }
-  // Safety net in case duplicates left us short.
   let pad = correct + 4
-  while (opts.size < 4) {
-    if (pad > 0 && pad !== correct) opts.add(pad)
+  while (byVal.size < 4) {
+    if (pad > 0 && !byVal.has(pad)) byVal.set(pad, wrongWhy(level, pad))
     pad += 1
   }
-  return { correct, options: shuffle([...opts]) }
+  const options = shuffle([...byVal.keys()].map((value) => ({ value, why: byVal.get(value) })))
+  return { correct, options }
 }
 
 export default function EvaluateLesson({
@@ -230,19 +248,26 @@ export default function EvaluateLesson({
     )
   }
 
-  // ---- Feedback line ----
-  let feedbackClass = ''
-  let feedbackText = !fullySubbed
+  // ---- Question (Bruh, top), step hint (bottom), result (under answers) ----
+  const questionText = level.instruction
+  const hintText = !fullySubbed
     ? 'Tap each variable to drop in the value it stands for.'
     : level.mode === 'choice'
-      ? 'Now evaluate and choose the answer.'
-      : 'Now evaluate and type the value.'
-  if (lastResult === 'wrong') {
-    feedbackClass = 'feedback--bad'
-    feedbackText = 'Not quite — recheck your arithmetic and try again.'
-  } else if (solved) {
-    feedbackClass = 'feedback--ok'
-    feedbackText = `✓ Correct! The expression equals ${correct}.`
+      ? 'Now evaluate and choose the answer below.'
+      : 'Now evaluate and type the value below.'
+  let resultTone = null
+  let resultText = ''
+  if (solved) {
+    resultTone = 'ok'
+    resultText = `✓ Correct! The expression equals ${correct}.`
+  } else if (lastResult === 'wrong') {
+    resultTone = 'bad'
+    if (level.mode === 'choice') {
+      const chosen = options.find((o) => o.value === choice)
+      resultText = chosen?.why ?? wrongWhy(level, choice)
+    } else {
+      resultText = wrongWhy(level, Number(answer))
+    }
   }
 
   const canSubmit =
@@ -273,10 +298,11 @@ export default function EvaluateLesson({
           />
         </div>
         <h2>{level.title}</h2>
-        <p>{level.instruction}</p>
       </div>
 
       <main className="order">
+        <OwlSpeech text={<strong>{questionText}</strong>} tone="neutral" />
+
         <div className="given" aria-label="Given values">
           {varIndices.length > 0 && <span className="given__label">Given</span>}
           {Object.entries(level.values).map(([name, val]) => (
@@ -323,16 +349,16 @@ export default function EvaluateLesson({
           <div className="choices" role="group" aria-label="Choose the value">
             {options.map((opt) => (
               <button
-                key={opt}
+                key={opt.value}
                 type="button"
-                className={'choice' + (choice === opt ? ' choice--sel' : '')}
+                className={'choice' + (choice === opt.value ? ' choice--sel' : '')}
                 disabled={!fullySubbed || solved}
                 onClick={() => {
-                  setChoice(opt)
+                  setChoice(opt.value)
                   setLastResult(null)
                 }}
               >
-                {opt}
+                {opt.value}
               </button>
             ))}
           </div>
@@ -360,10 +386,11 @@ export default function EvaluateLesson({
           </div>
         )}
 
-        <OwlSpeech
-          text={feedbackText}
-          tone={feedbackClass === 'feedback--ok' ? 'ok' : feedbackClass === 'feedback--bad' ? 'bad' : 'neutral'}
-        />
+        {resultText && (
+          <p className={`answer-feedback answer-feedback--${resultTone}`} role="status" aria-live="polite">
+            {resultText}
+          </p>
+        )}
 
         <div className="controls">
           {!solved && subbed.size > 0 && (
@@ -387,6 +414,8 @@ export default function EvaluateLesson({
             </button>
           )}
         </div>
+
+        {!solved && <p className="lesson-hint">{hintText}</p>}
       </main>
     </div>
   )

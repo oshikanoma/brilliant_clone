@@ -43,9 +43,8 @@ function Label({ x, y, text }) {
   )
 }
 
-export default function PaintByNumber({ onBack }) {
+export default function PaintByNumber({ onBack, fills = {}, onChangeFills }) {
   const [selected, setSelected] = useState(1)
-  const [fills, setFills] = useState({}) // regionId -> color number
   const [needColorHint, setNeedColorHint] = useState(false)
 
   const paintedCount = Object.values(fills).filter((v) => v != null).length
@@ -60,10 +59,10 @@ export default function PaintByNumber({ onBack }) {
       return
     }
     setNeedColorHint(false)
-    setFills((prev) => ({ ...prev, [id]: prev[id] === selected ? null : selected }))
+    onChangeFills({ ...fills, [id]: fills[id] === selected ? null : selected })
   }
 
-  const reset = () => setFills({})
+  const reset = () => onChangeFills({})
 
   let tone = 'neutral'
   let message

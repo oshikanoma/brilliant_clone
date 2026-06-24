@@ -48,24 +48,40 @@ function combineAll(terms) {
   return out
 }
 
+// Friendly label for a term's "group", e.g. "the x-terms" or "the constant".
+function groupLabel(t) {
+  return t.varname === '' ? 'the constant' : `the ${t.varname}-terms`
+}
+
 // Build 4 multiple-choice answers (the correct simplified form plus plausible
-// distractors made by nudging a single coefficient).
+// distractors made by nudging a single coefficient). Each distractor carries a
+// `why` naming exactly which group's coefficient is off.
 function makeOptions(correctList) {
   const correct = exprText(correctList)
-  const opts = new Set([correct])
+  const byText = new Map([[correct, null]])
   const candidates = []
   for (let gi = 0; gi < correctList.length; gi++) {
     for (const d of [1, -1, 2, -2]) {
       const copy = correctList.map((t) => ({ ...t }))
       copy[gi] = { ...copy[gi], coef: copy[gi].coef + d }
-      if (copy[gi].coef >= 1) candidates.push(copy)
+      if (copy[gi].coef >= 1) {
+        const term = correctList[gi]
+        const label = groupLabel(term)
+        const corr = termText(term)
+        candidates.push({
+          list: copy,
+          why: `Recount ${label} — adding their coefficients gives ${corr}, which isn't what this answer shows. Add only the numbers in front of the matching variable.`,
+        })
+      }
     }
   }
   for (const c of shuffle(candidates)) {
-    if (opts.size >= 4) break
-    opts.add(exprText(c))
+    if (byText.size >= 4) break
+    const text = exprText(c.list)
+    if (!byText.has(text)) byText.set(text, c.why)
   }
-  return { correct, options: shuffle([...opts]) }
+  const options = shuffle([...byText.keys()].map((text) => ({ text, why: byText.get(text) })))
+  return { correct, options }
 }
 
 const VARS = ['x', 'y', 'z']
@@ -124,6 +140,7 @@ export default function LikeTermsLesson({
   const [cursor, setCursor] = useState(null)
   const [choice, setChoice] = useState(null)
   const [lastResult, setLastResult] = useState(null)
+  const [wrongWhy, setWrongWhy] = useState(null)
   const [showIntro, setShowIntro] = useState(levelIndex === 0 && value.terms == null)
   const [showSummary, setShowSummary] = useState(false)
 
@@ -175,6 +192,7 @@ export default function LikeTermsLesson({
   const onDot = (id) => {
     if (solved) return
     setLastResult(null)
+    setWrongWhy(null)
     if (anchorA == null) {
       setAnchorA(id)
       setAnchorB(null)
@@ -217,6 +235,11 @@ export default function LikeTermsLesson({
           : results,
       })
     } else {
+      const aVar = a.varname === '' ? 'no variable (it\'s a plain number)' : `variable ${a.varname}`
+      const bVar = b.varname === '' ? 'no variable (it\'s a plain number)' : `variable ${b.varname}`
+      setWrongWhy(
+        `${termText(a)} and ${termText(b)} aren't like terms — ${termText(a)} has ${aVar}, while ${termText(b)} has ${bVar}. Only terms that share the exact same variable can be roped together.`
+      )
       setLastResult('wrong')
       setAnchorA(null)
       setAnchorB(null)
@@ -231,6 +254,13 @@ export default function LikeTermsLesson({
   const submitSolve = () => {
     if (choice == null) return
     const ok = choice === data.correct
+    if (!ok) {
+      const chosen = (data.options ?? []).find((o) => (typeof o === 'string' ? o : o.text) === choice)
+      setWrongWhy(
+        (chosen && typeof chosen !== 'string' ? chosen.why : null) ??
+          'Not quite — combine each group of like terms by adding the numbers in front, then try again.'
+      )
+    }
     setLastResult(ok ? 'correct' : 'wrong')
     onChange({
       levelIndex,
@@ -251,6 +281,7 @@ export default function LikeTermsLesson({
     setAnchorB(null)
     setChoice(null)
     setLastResult(null)
+    setWrongWhy(null)
     if (level.mode === 'solve') {
       const fresh = genSolve(level.difficulty)
       onChange({ levelIndex, terms: fresh.terms, options: fresh.options, correct: fresh.correct, results })
@@ -264,6 +295,7 @@ export default function LikeTermsLesson({
     setAnchorB(null)
     setChoice(null)
     setLastResult(null)
+    setWrongWhy(null)
     onChange({ levelIndex: levelIndex + 1, terms: null, options: null, correct: null, results })
   }
 
@@ -272,6 +304,7 @@ export default function LikeTermsLesson({
     setAnchorB(null)
     setChoice(null)
     setLastResult(null)
+    setWrongWhy(null)
     setShowSummary(false)
     onChange({ levelIndex: 0, terms: null, options: null, correct: null, results: {} })
   }
@@ -364,27 +397,30 @@ export default function LikeTermsLesson({
     )
   }
 
-  // ---- Feedback line ----
-  let feedbackClass = ''
-  let feedbackText =
+  // ---- Question (Bruh, top), step hint (bottom), result (under answers) ----
+  const questionText = level.instruction
+  const hintText =
     level.mode === 'solve'
-      ? 'Work it out on the whiteboard, then pick the simplified form.'
+      ? 'Work it out on the whiteboard, then pick the simplified form below.'
       : 'Rope two like terms together, then Submit.'
-  if (lastResult === 'wrong') {
-    feedbackClass = 'feedback--bad'
-    feedbackText =
-      level.mode === 'solve'
-        ? 'Not quite — combine the like terms and try again.'
-        : 'Those aren’t like terms — they need the same variable. Try again.'
-  } else if (solved) {
-    feedbackClass = 'feedback--ok'
-    feedbackText =
+  let resultTone = null
+  let resultText = ''
+  if (solved) {
+    resultTone = 'ok'
+    resultText =
       level.mode === 'solve'
         ? `✓ Correct! The simplified form is ${data.correct}.`
         : `✓ Fully combined! It simplifies to ${exprText(combineAll(terms))}.`
+  } else if (lastResult === 'wrong') {
+    resultTone = 'bad'
+    resultText =
+      wrongWhy ??
+      (level.mode === 'solve'
+        ? 'Not quite — combine the like terms and try again.'
+        : 'Those aren’t like terms — they need the same variable. Try again.')
   } else if (lastResult === 'correct') {
-    feedbackClass = 'feedback--ok'
-    feedbackText = '✓ Nice — those combined. Keep going.'
+    resultTone = 'ok'
+    resultText = '✓ Nice — those combined. Keep going.'
   }
 
   const canSubmit =
@@ -420,10 +456,11 @@ export default function LikeTermsLesson({
           />
         </div>
         <h2>{level.title}</h2>
-        <p>{level.instruction}</p>
       </div>
 
       <main className="order">
+        <OwlSpeech text={<strong>{questionText}</strong>} tone="neutral" />
+
         <div
           className="terms-area"
           ref={areaRef}
@@ -478,28 +515,33 @@ export default function LikeTermsLesson({
             <Whiteboard key={levelIndex} />
 
             <div className="choices" role="group" aria-label="Choose the simplified expression">
-              {data.options.map((opt) => (
-                <button
-                  key={opt}
-                  type="button"
-                  className={'choice' + (choice === opt ? ' choice--sel' : '')}
-                  disabled={solved}
-                  onClick={() => {
-                    setChoice(opt)
-                    setLastResult(null)
-                  }}
-                >
-                  {opt}
-                </button>
-              ))}
+              {(data.options ?? []).map((opt) => {
+                const text = typeof opt === 'string' ? opt : opt.text
+                return (
+                  <button
+                    key={text}
+                    type="button"
+                    className={'choice' + (choice === text ? ' choice--sel' : '')}
+                    disabled={solved}
+                    onClick={() => {
+                      setChoice(text)
+                      setLastResult(null)
+                      setWrongWhy(null)
+                    }}
+                  >
+                    {text}
+                  </button>
+                )
+              })}
             </div>
           </>
         )}
 
-        <OwlSpeech
-          text={feedbackText}
-          tone={feedbackClass === 'feedback--ok' ? 'ok' : feedbackClass === 'feedback--bad' ? 'bad' : 'neutral'}
-        />
+        {resultText && (
+          <p className={`answer-feedback answer-feedback--${resultTone}`} role="status" aria-live="polite">
+            {resultText}
+          </p>
+        )}
 
         <div className="controls">
           {!solved && (
@@ -523,6 +565,8 @@ export default function LikeTermsLesson({
             </button>
           )}
         </div>
+
+        {!solved && <p className="lesson-hint">{hintText}</p>}
       </main>
     </div>
   )

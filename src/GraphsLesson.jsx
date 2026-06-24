@@ -43,6 +43,45 @@ function parseSlope(str) {
 
 const onLine = (p, m, b) => Math.abs(p.y - (m * p.x + b)) < 1e-9
 
+// Express a slope as small integer rise/run for explanations.
+function slopeRiseRun(m) {
+  if (Number.isInteger(m)) return { rise: m, run: 1 }
+  for (const d of [2, 3, 4]) if (Number.isInteger(m * d)) return { rise: m * d, run: d }
+  return { rise: m, run: 1 }
+}
+
+// A specific explanation of why the student's current answer is wrong, tailored
+// to the question type and exactly what they entered.
+function wrongGraphWhy(level, pins, slopeInput) {
+  const eq = equationText(level.m, level.b)
+  if (level.mode === 'intercept') {
+    const p = pins[0]
+    if (!p) return 'Drop a pin where the line meets the y-axis.'
+    if (p.x !== 0)
+      return `The y-intercept sits on the y-axis, where x = 0 — but your pin is at x = ${p.x}. Slide it onto the vertical axis at y = ${level.b}.`
+    return `You're on the y-axis — good — but ${eq} crosses at y = ${level.b}, not y = ${p.y}. In y = mx + b, the "+ ${level.b}" at the end is the y-intercept.`
+  }
+  if (level.mode === 'slope') {
+    const v = parseSlope(slopeInput)
+    if (v == null) return 'Type the slope as a whole number or a fraction like rise/run.'
+    if (level.m !== 0 && Math.abs(v + level.m) < 1e-9)
+      return `Watch the sign — this line goes ${level.m > 0 ? 'up' : 'down'} as you move right, so its slope is ${toFrac(level.m)}, not ${slopeInput}.`
+    if (level.m !== 0 && Math.abs(v - 1 / level.m) < 1e-9)
+      return `It looks like you used run over rise. Slope is rise ÷ run, so it's ${toFrac(level.m)}.`
+    const rr = slopeRiseRun(level.m)
+    return `Not quite. Slope is rise ÷ run: this line rises ${rr.rise} for every ${rr.run} step to the right, so the slope is ${toFrac(level.m)}.`
+  }
+  // graphing mode (two pins)
+  if (pins.length === 2 && pins[0].x === pins[1].x)
+    return 'Those two pins share the same x-value, so they stack straight up. Pick points with different x-values.'
+  const bad = pins.find((p) => !onLine(p, level.m, level.b))
+  if (bad) {
+    const expected = level.m * bad.x + level.b
+    return `The point (${bad.x}, ${bad.y}) isn't on ${eq}. Plug in x = ${bad.x}: y should be ${toFrac(expected)}. Move that pin onto the line.`
+  }
+  return "Those points aren't both on the line — start at the y-intercept, then use the slope to step to the next one."
+}
+
 export default function GraphsLesson({
   onBack,
   onPass,
@@ -232,24 +271,21 @@ export default function GraphsLesson({
       '), then use the slope to step to another point. Drop two pins on the line.'
   }
 
-  let feedbackClass = ''
-  let feedbackText = baseFeedback
-  if (lastResult === 'wrong') {
-    feedbackClass = 'feedback--bad'
-    feedbackText =
-      level.mode === 'slope'
-        ? 'Not quite — rise over run. Recount the steps and try again.'
-        : level.mode === 'intercept'
-          ? 'Not quite — the y-intercept sits on the y-axis, where x = 0. Try again.'
-          : 'Those points aren\'t both on the line. Check the intercept and slope, then try again.'
-  } else if (solved) {
-    feedbackClass = 'feedback--ok'
-    feedbackText =
+  const questionText = instruction
+  const hintText = baseFeedback
+  let resultTone = null
+  let resultText = ''
+  if (solved) {
+    resultTone = 'ok'
+    resultText =
       level.mode === 'slope'
         ? `✓ Correct! The slope is ${toFrac(level.m)}.`
         : level.mode === 'intercept'
           ? `✓ Correct! The y-intercept is (0, ${level.b}).`
           : `✓ Nailed it — that's the line ${equationText(level.m, level.b)}.`
+  } else if (lastResult === 'wrong') {
+    resultTone = 'bad'
+    resultText = wrongGraphWhy(level, pins, slopeInput)
   }
 
   // Show the line for the intercept/slope questions (the equation is given), and
@@ -291,10 +327,11 @@ export default function GraphsLesson({
           />
         </div>
         <h2>{level.title}</h2>
-        <p>{instruction}</p>
       </div>
 
       <main className="order">
+        <OwlSpeech text={<strong>{questionText}</strong>} tone="neutral" />
+
         <div className="graph-wrap">
           <Graph
             m={level.m}
@@ -332,10 +369,11 @@ export default function GraphsLesson({
           </div>
         )}
 
-        <OwlSpeech
-          text={feedbackText}
-          tone={feedbackClass === 'feedback--ok' ? 'ok' : feedbackClass === 'feedback--bad' ? 'bad' : 'neutral'}
-        />
+        {resultText && (
+          <p className={`answer-feedback answer-feedback--${resultTone}`} role="status" aria-live="polite">
+            {resultText}
+          </p>
+        )}
 
         <div className="controls">
           {!solved && (pins.length > 0 || slopeInput !== '') && (
@@ -359,6 +397,8 @@ export default function GraphsLesson({
             </button>
           )}
         </div>
+
+        {!solved && <p className="lesson-hint">{hintText}</p>}
       </main>
     </div>
   )

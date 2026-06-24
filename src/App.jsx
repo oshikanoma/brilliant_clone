@@ -91,6 +91,8 @@ function Session({ username }) {
   const [streak, setStreak] = useState(saved?.streak ?? 0)
   const [lastLoginDay, setLastLoginDay] = useState(saved?.lastLoginDay ?? null)
   const [streakReward, setStreakReward] = useState(null)
+  // Paint-by-number progress: regionId -> color number.
+  const [paint, setPaint] = useState(saved?.paint ?? {})
 
   // Persist this user's session on every meaningful change.
   useEffect(() => {
@@ -104,8 +106,9 @@ function Session({ username }) {
       finaleDismissed,
       streak,
       lastLoginDay,
+      paint,
     })
-  }, [username, screen, name, checkpoint, lessons, unlocked, completed, finaleDismissed, streak, lastLoginDay])
+  }, [username, screen, name, checkpoint, lessons, unlocked, completed, finaleDismissed, streak, lastLoginDay, paint])
 
   // Reconcile the login streak once per session: bump it on consecutive days,
   // reset it after a missed day, and reward the first login of the day.
@@ -173,7 +176,7 @@ function Session({ username }) {
       />
     )
   } else if (screen === 'paint') {
-    screenEl = <PaintByNumber onBack={() => setScreen('path')} />
+    screenEl = <PaintByNumber onBack={() => setScreen('path')} fills={paint} onChangeFills={setPaint} />
   } else if (checkpoint === 1) {
     screenEl = <OrderLesson {...lessonProps} />
   } else if (checkpoint === 2) {
