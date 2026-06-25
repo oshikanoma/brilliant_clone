@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import OwlSpeech from './OwlSpeech.jsx'
-import { logIn, signUp, logInWithGoogle, googleAuthAvailable } from './auth.js'
+import { logIn, signUp, logInWithGoogle } from './auth.js'
 
 // Login / sign-up gate shown before the app. Accounts are stored locally (see
 // auth.js) so a student's progress is remembered and restored per username.
@@ -110,9 +110,6 @@ export default function Auth({ onAuthed }) {
           </svg>
           {busy ? 'Connecting…' : 'Continue with Google'}
         </button>
-        {!googleAuthAvailable && (
-          <p className="auth__hint">Google sign-in activates once Firebase is configured.</p>
-        )}
 
         <button type="button" className="auth__switch" onClick={swap}>
           {mode === 'signup'
