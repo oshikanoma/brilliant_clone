@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import OwlSpeech from './OwlSpeech.jsx'
 import MakeupDots from './MakeupDots.jsx'
 import { useMakeup, missedIndicesFrom } from './useMakeup.js'
+import { shuffleAll } from './shuffleChoices.js'
 
 // A reusable multiple-choice lesson engine that powers every "Expressions with
 // Exponents" and "Quadratics and Polynomials" checkpoint (and their section
@@ -88,7 +89,7 @@ export default function ConceptLesson({
   onBack,
   onPass,
   lessonTitle = 'Lesson',
-  levels,
+  levels: rawLevels,
   IntroComponent = null,
   intro = null,
   generateLike = null,
@@ -96,6 +97,9 @@ export default function ConceptLesson({
   value,
   onChange,
 }) {
+  // Shuffle each question's options once per attempt so the answer isn't always
+  // the first choice. (Make-up questions from generateLike are already shuffled.)
+  const levels = useMemo(() => shuffleAll(rawLevels), [rawLevels])
   const qIndex = value.levelIndex
   const results = value.results ?? {}
   const qResult = results[qIndex] ?? { solved: false, wrong: false }

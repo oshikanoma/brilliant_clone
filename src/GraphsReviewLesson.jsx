@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import OwlSpeech from './OwlSpeech.jsx'
+import { shuffleAll } from './shuffleChoices.js'
 
 // The "Review" checkpoint closes out the Graphs and Linear Relationships
 // section. It's a mixed multiple-choice quiz drawing one question from each
@@ -7,7 +8,7 @@ import OwlSpeech from './OwlSpeech.jsx'
 // equations). The student must score at least 80% on the first try of each
 // question to pass and unlock the next section.
 
-const QUESTIONS = [
+const BASE_QUESTIONS = [
   {
     id: 'yintercept',
     topic: 'Y-Intercept',
@@ -59,6 +60,8 @@ const QUESTIONS = [
 ]
 
 export default function GraphsReviewLesson({ onBack, onPass, lessonTitle = 'Review', value, onChange }) {
+  // Shuffle each question's options once per attempt so the answer isn't always first.
+  const QUESTIONS = useMemo(() => shuffleAll(BASE_QUESTIONS), [])
   const qIndex = value.levelIndex
   const results = value.results ?? {}
   const qResult = results[qIndex] ?? { solved: false, wrong: false }

@@ -21,9 +21,20 @@
   color: #3a5a0a;
 }
 
-.whiteboard__clear {
-  padding: 0.3rem 0.85rem;
+.whiteboard__tools {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.whiteboard__tool {
+  padding: 0.3rem 0.7rem;
   font-size: 0.8rem;
+}
+
+.whiteboard__tool:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .whiteboard__canvas {

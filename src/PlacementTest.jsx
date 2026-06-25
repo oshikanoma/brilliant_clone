@@ -1,12 +1,13 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import OwlSpeech from './OwlSpeech.jsx'
+import { shuffleAll } from './shuffleChoices.js'
 
 // A short placement test offered to brand-new accounts. It mirrors the Review
 // checkpoint (one question per foundational skill) and gives feedback after
 // every answer. Acing it on the first try lets the student test out of the
 // whole Algebra Foundations module and jump straight to graphs.
 
-const QUESTIONS = [
+const BASE_QUESTIONS = [
   {
     id: 'solve',
     topic: 'Solving Equations',
@@ -58,6 +59,8 @@ const QUESTIONS = [
 ]
 
 export default function PlacementTest({ onExit }) {
+  // Shuffle each question's options once per attempt so the answer isn't always first.
+  const QUESTIONS = useMemo(() => shuffleAll(BASE_QUESTIONS), [])
   const [qIndex, setQIndex] = useState(0)
   const [choice, setChoice] = useState(null)
   const [locked, setLocked] = useState(false)
