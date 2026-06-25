@@ -4,7 +4,7 @@ const sup = (n) => String(n).replace(/-/g, '⁻').replace(/\d/g, (d) => '⁰¹²
 export const LEVELS = [
   {
     id: 'ppow-1',
-    topic: 'Powers of Powers',
+    topic: 'Multiply Exponents',
     prompt: 'Simplify:  (x²)³',
     options: ['x⁵', 'x⁶', 'x⁸', 'x²³'],
     correct: 1,
@@ -12,7 +12,7 @@ export const LEVELS = [
   },
   {
     id: 'ppow-2',
-    topic: 'Powers of Powers',
+    topic: 'Variable Bases',
     prompt: 'Simplify:  (y³)²',
     options: ['y⁵', 'y⁹', 'y⁶', 'y¹'],
     correct: 2,
@@ -20,7 +20,7 @@ export const LEVELS = [
   },
   {
     id: 'ppow-3',
-    topic: 'Powers of Powers',
+    topic: 'Numeric Bases',
     prompt: 'Simplify:  (2²)³',
     options: ['2⁶', '2⁵', '4⁶', '8⁶'],
     correct: 0,
@@ -28,7 +28,7 @@ export const LEVELS = [
   },
   {
     id: 'ppow-4',
-    topic: 'Powers of Powers',
+    topic: 'Larger Exponents',
     prompt: 'Simplify:  (a⁴)²',
     options: ['a⁶', 'a⁴', 'a⁸', 'a¹⁶'],
     correct: 2,
@@ -36,7 +36,7 @@ export const LEVELS = [
   },
   {
     id: 'ppow-5',
-    topic: 'Powers of Powers',
+    topic: 'With Coefficients',
     prompt: 'Simplify:  (3x²)³',
     options: ['27x⁶', '9x⁶', '27x⁵', '3x⁶'],
     correct: 0,

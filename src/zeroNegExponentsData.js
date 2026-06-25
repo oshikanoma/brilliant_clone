@@ -9,7 +9,7 @@ const sup = (n) => String(n).replace(/-/g, '⁻').replace(/\d/g, (d) => '⁰¹²
 export const LEVELS = [
   {
     id: 'zero',
-    topic: 'Zero & Negative Exponents',
+    topic: 'Zero Exponent',
     prompt: 'Evaluate:  5⁰',
     options: ['1', '0', '5', 'undefined'],
     correct: 0,
@@ -17,7 +17,7 @@ export const LEVELS = [
   },
   {
     id: 'neg-var',
-    topic: 'Zero & Negative Exponents',
+    topic: 'Negative Variable',
     prompt: 'Rewrite with a positive exponent:  x⁻²',
     options: ['1/x²', '−x²', 'x²', '−2x'],
     correct: 0,
@@ -25,7 +25,7 @@ export const LEVELS = [
   },
   {
     id: 'neg-num',
-    topic: 'Zero & Negative Exponents',
+    topic: 'Negative Numeric',
     prompt: 'Evaluate:  2⁻³',
     options: ['1/8', '−8', '8', '−6'],
     correct: 0,
@@ -33,7 +33,7 @@ export const LEVELS = [
   },
   {
     id: 'coef-zero',
-    topic: 'Zero & Negative Exponents',
+    topic: 'Zero with Coefficient',
     prompt: 'Simplify:  4x⁰   (x ≠ 0)',
     options: ['4', '1', '4x', '0'],
     correct: 0,
@@ -41,7 +41,7 @@ export const LEVELS = [
   },
   {
     id: 'neg-num-2',
-    topic: 'Zero & Negative Exponents',
+    topic: 'Reciprocal Value',
     prompt: 'Evaluate:  3⁻²',
     options: ['1/9', '−9', '1/6', '9'],
     correct: 0,

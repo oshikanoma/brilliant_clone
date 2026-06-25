@@ -20,7 +20,7 @@ function shuffle(arr) {
 export const LEVELS = [
   {
     id: 'mul-1',
-    topic: 'Multiply Polynomials',
+    topic: 'FOIL Basics',
     prompt: 'Multiply:  (x + 1)(x + 2)',
     options: ['x² + 3x + 2', 'x² + 2x + 2', 'x² + 3x + 3', 'x² + 2'],
     correct: 0,
@@ -28,7 +28,7 @@ export const LEVELS = [
   },
   {
     id: 'mul-2',
-    topic: 'Multiply Polynomials',
+    topic: 'Consecutive Pair',
     prompt: 'Multiply:  (x + 2)(x + 3)',
     options: ['x² + 5x + 6', 'x² + 6x + 6', 'x² + 5x + 5', 'x² + 6'],
     correct: 0,
@@ -36,7 +36,7 @@ export const LEVELS = [
   },
   {
     id: 'mul-3',
-    topic: 'Multiply Polynomials',
+    topic: 'Bigger Numbers',
     prompt: 'Multiply:  (x + 4)(x + 5)',
     options: ['x² + 9x + 20', 'x² + 20x + 9', 'x² + 9x + 9', 'x² + 9x + 45'],
     correct: 0,
@@ -44,7 +44,7 @@ export const LEVELS = [
   },
   {
     id: 'mul-4',
-    topic: 'Multiply Polynomials',
+    topic: 'Spread Apart',
     prompt: 'Multiply:  (x + 3)(x + 7)',
     options: ['x² + 10x + 21', 'x² + 21x + 10', 'x² + 10x + 10', 'x² + 4x + 21'],
     correct: 0,
@@ -52,7 +52,7 @@ export const LEVELS = [
   },
   {
     id: 'mul-5',
-    topic: 'Multiply Polynomials',
+    topic: 'Large Products',
     prompt: 'Multiply:  (x + 6)(x + 8)',
     options: ['x² + 14x + 48', 'x² + 48x + 14', 'x² + 14x + 14', 'x² + 14x + 68'],
     correct: 0,

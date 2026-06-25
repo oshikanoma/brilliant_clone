@@ -9,7 +9,7 @@ const sup = (n) => String(n).replace(/-/g, '⁻').replace(/\d/g, (d) => '⁰¹²
 export const LEVELS = [
   {
     id: 'basic',
-    topic: 'Divide Powers',
+    topic: 'Subtract the Exponents',
     prompt: 'Simplify:  x⁷ / x²',
     options: ['x⁵', 'x⁹', 'x³·⁵', 'x¹⁴'],
     correct: 0,
@@ -17,7 +17,7 @@ export const LEVELS = [
   },
   {
     id: 'other-base',
-    topic: 'Divide Powers',
+    topic: 'Any Shared Base',
     prompt: 'Simplify:  y⁹ / y⁴',
     options: ['y⁵', 'y¹³', 'y⁶', 'y²·²⁵'],
     correct: 0,
@@ -25,7 +25,7 @@ export const LEVELS = [
   },
   {
     id: 'coefficients',
-    topic: 'Divide Powers',
+    topic: 'Dividing Coefficients Too',
     prompt: 'Simplify:  10x⁸ / 2x³',
     options: ['5x⁵', '5x¹¹', '8x⁵', '20x⁵'],
     correct: 0,
@@ -33,7 +33,7 @@ export const LEVELS = [
   },
   {
     id: 'numeric',
-    topic: 'Divide Powers',
+    topic: 'Numeric Bases',
     prompt: 'Evaluate:  2⁶ / 2²',
     options: ['16', '8', '64', '2¹²'],
     correct: 0,
@@ -41,7 +41,7 @@ export const LEVELS = [
   },
   {
     id: 'negative-result',
-    topic: 'Divide Powers',
+    topic: 'When the Result Goes Negative',
     prompt: 'Simplify:  x³ / x⁵',
     options: ['x⁻²', 'x²', 'x⁸', 'x⁻⁸'],
     correct: 0,

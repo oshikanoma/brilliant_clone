@@ -19,7 +19,7 @@ function shuffle(arr) {
 export const LEVELS = [
   {
     id: 'sub-1',
-    topic: 'Subtract Polynomials',
+    topic: 'Negative Result',
     prompt: 'Subtract:  (5x² + 2x) − (2x² + 4x)',
     options: ['3x² − 2x', '3x² + 6x', '7x² + 6x', '3x² + 2x'],
     correct: 0,
@@ -27,7 +27,7 @@ export const LEVELS = [
   },
   {
     id: 'sub-2',
-    topic: 'Subtract Polynomials',
+    topic: 'Two Binomials',
     prompt: 'Subtract:  (7x² + 6x) − (3x² + x)',
     options: ['4x² + 5x', '4x² + 7x', '10x² + 5x', '4x² + 6x'],
     correct: 0,
@@ -35,7 +35,7 @@ export const LEVELS = [
   },
   {
     id: 'sub-3',
-    topic: 'Subtract Polynomials',
+    topic: 'Minus a Negative',
     prompt: 'Subtract:  (6x² + 3x) − (2x² − 5x)',
     options: ['4x² + 8x', '4x² − 2x', '4x² + 8x²', '8x² − 2x'],
     correct: 0,
@@ -43,7 +43,7 @@ export const LEVELS = [
   },
   {
     id: 'sub-4',
-    topic: 'Subtract Polynomials',
+    topic: 'With Constants',
     prompt: 'Subtract:  (4x² + 5x + 9) − (x² + 2x + 3)',
     options: ['3x² + 3x + 6', '3x² + 7x + 12', '3x² + 3x + 12', '5x² + 3x + 6'],
     correct: 0,
@@ -51,7 +51,7 @@ export const LEVELS = [
   },
   {
     id: 'sub-5',
-    topic: 'Subtract Polynomials',
+    topic: 'Cubic Terms',
     prompt: 'Subtract:  (3x³ + 5x²) − (x³ + 8x²)',
     options: ['2x³ − 3x²', '2x³ + 13x²', '2x⁶ − 3x⁴', '4x³ − 3x²'],
     correct: 0,

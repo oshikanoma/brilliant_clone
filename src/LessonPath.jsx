@@ -52,6 +52,10 @@ const SECTIONS = [
       'Review',
     ],
   },
+  {
+    title: 'Graduation',
+    items: ['Final Exam'],
+  },
 ]
 
 const CHECKPOINTS = SECTIONS.flatMap((s) => s.items)
@@ -139,11 +143,11 @@ export default function LessonPath({
   onRestart,
   unlocked = 1,
   completed = {},
-  finished = false,
-  onDismissFinale,
+  graduated = false,
 }) {
   const [selected, setSelected] = useState(null)
   const [restartIdx, setRestartIdx] = useState(null)
+  const [showFinale, setShowFinale] = useState(false)
   const trailRef = useRef(null)
   const dotRefs = useRef([])
   const [points, setPoints] = useState([])
@@ -223,7 +227,7 @@ export default function LessonPath({
               {section.items.map((label) => {
                 i += 1
                 const idx = i
-                const isBig = label === 'Review'
+                const isBig = label === 'Review' || label === 'Final Exam'
                 const isUnlocked = idx < unlocked
                 const isCompleted = !!completed[idx]
                 const isSelected = selected === idx
@@ -281,8 +285,20 @@ export default function LessonPath({
         })()}
       </div>
 
-      {finished && (
-        <GraduationFinale avatar={avatar} name={name} onClose={onDismissFinale} />
+      {graduated && (
+        <div className="path__grad-cta" role="status">
+          <div className="path__grad-cta-text">
+            <strong>You passed the Final Exam!</strong>
+            <span>Your graduation ceremony is ready whenever you are.</span>
+          </div>
+          <button className="btn path__grad-btn" onClick={() => setShowFinale(true)}>
+            Walk the stage →
+          </button>
+        </div>
+      )}
+
+      {showFinale && (
+        <GraduationFinale avatar={avatar} name={name} onClose={() => setShowFinale(false)} />
       )}
 
       {selected !== null && (

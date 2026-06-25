@@ -4,7 +4,7 @@ const sup = (n) => String(n).replace(/-/g, '⁻').replace(/\d/g, (d) => '⁰¹²
 export const LEVELS = [
   {
     id: 'mpow-1',
-    topic: 'Multiply Powers',
+    topic: 'Add the Exponents',
     prompt: 'Simplify:  x² · x³',
     options: ['x⁵', 'x⁶', 'x¹', '2x⁵'],
     correct: 0,
@@ -12,7 +12,7 @@ export const LEVELS = [
   },
   {
     id: 'mpow-2',
-    topic: 'Multiply Powers',
+    topic: 'Variable Bases',
     prompt: 'Simplify:  y⁴ · y³',
     options: ['y¹²', 'y⁷', 'y¹', 'y⁴³'],
     correct: 1,
@@ -20,7 +20,7 @@ export const LEVELS = [
   },
   {
     id: 'mpow-3',
-    topic: 'Multiply Powers',
+    topic: 'Numeric Bases',
     prompt: 'Simplify:  2³ · 2²',
     options: ['4⁵', '2⁶', '2⁵', '2¹'],
     correct: 2,
@@ -28,7 +28,7 @@ export const LEVELS = [
   },
   {
     id: 'mpow-4',
-    topic: 'Multiply Powers',
+    topic: 'Implied Exponent',
     prompt: 'Simplify:  a · a⁵',
     options: ['a⁵', 'a⁶', 'a⁴', '2a⁶'],
     correct: 1,
@@ -36,7 +36,7 @@ export const LEVELS = [
   },
   {
     id: 'mpow-5',
-    topic: 'Multiply Powers',
+    topic: 'With Coefficients',
     prompt: 'Simplify:  3x² · 4x³',
     options: ['12x⁵', '7x⁵', '12x⁶', '12x⁵·'],
     correct: 0,

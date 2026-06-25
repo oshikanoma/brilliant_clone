@@ -47,6 +47,7 @@ import { LEVELS as DIFF_SQUARES_LEVELS, generateLike as diffSquaresLike } from '
 import { LEVELS as PERFECT_SQUARES_LEVELS, generateLike as perfectSquaresLike } from './perfectSquaresData.js'
 import { LEVELS as EXPONENTS_REVIEW_LEVELS } from './exponentsReviewData.js'
 import { LEVELS as QUADRATICS_REVIEW_LEVELS } from './quadraticsReviewData.js'
+import { LEVELS as FINAL_EXAM_LEVELS } from './finalExamData.js'
 import Settings from './Settings.jsx'
 import About from './About.jsx'
 import AvatarOwl, { DEFAULT_AVATAR } from './AvatarOwl.jsx'
@@ -231,8 +232,6 @@ function Session({ username, defaultName = '', isGoogle = false, onLogout }) {
   // ones the student has passed. Passing a checkpoint unlocks the next.
   const [unlocked, setUnlocked] = useState(saved?.unlocked ?? 1)
   const [completed, setCompleted] = useState(saved?.completed ?? {})
-  // Whether the "you finished the module" popup has been dismissed on the path.
-  const [finaleDismissed, setFinaleDismissed] = useState(saved?.finaleDismissed ?? false)
   // Daily login streak tracking.
   const [streak, setStreak] = useState(saved?.streak ?? 0)
   const [lastLoginDay, setLastLoginDay] = useState(saved?.lastLoginDay ?? null)
@@ -254,13 +253,12 @@ function Session({ username, defaultName = '', isGoogle = false, onLogout }) {
       lessons,
       unlocked,
       completed,
-      finaleDismissed,
       streak,
       lastLoginDay,
       paint,
       dailyCorrect,
     })
-  }, [username, screen, name, birthday, avatar, checkpoint, lessons, unlocked, completed, finaleDismissed, streak, lastLoginDay, paint, dailyCorrect])
+  }, [username, screen, name, birthday, avatar, checkpoint, lessons, unlocked, completed, streak, lastLoginDay, paint, dailyCorrect])
 
   // Reconcile the login streak once per session: bump it on consecutive days,
   // reset it after a missed day, and reward the first login of the day.
@@ -285,12 +283,12 @@ function Session({ username, defaultName = '', isGoogle = false, onLogout }) {
     setScreen('path')
   }
 
-  // Mark a checkpoint passed and unlock the next one on the path.
+  // Mark a checkpoint passed and unlock the next one on the path. Passing the
+  // final checkpoint (the Final Exam) flips `completed[lastIndex]`, which
+  // unlocks the "Walk the stage" graduation button on the path.
   const passCheckpoint = (index) => {
     setCompleted((prev) => ({ ...prev, [index]: true }))
     setUnlocked((u) => Math.min(CHECKPOINTS.length, Math.max(u, index + 2)))
-    // Finishing the final checkpoint re-arms the module-complete popup.
-    if (index === lastIndex) setFinaleDismissed(false)
   }
 
   const lessonProps = {
@@ -336,6 +334,7 @@ function Session({ username, defaultName = '', isGoogle = false, onLogout }) {
   //   18 Review → mixed exponents quiz
   //   19–24 Quadratics and Polynomials → ConceptLesson (animated intro + MC + make-up)
   //   25 Review → mixed quadratics quiz
+  //   26 Final Exam → cumulative ConceptLesson exam (pass/fail 80%, unlocks graduation)
   let screenEl
   if (screen === 'welcome') {
     screenEl = (
@@ -372,8 +371,7 @@ function Session({ username, defaultName = '', isGoogle = false, onLogout }) {
         dailyCorrect={dailyCorrect}
         unlocked={unlocked}
         completed={completed}
-        finished={!!completed[lastIndex] && !finaleDismissed}
-        onDismissFinale={() => setFinaleDismissed(true)}
+        graduated={!!completed[lastIndex]}
         onStart={(index) => {
           setCheckpoint(index)
           setScreen('lesson')
@@ -510,6 +508,27 @@ function Session({ username, defaultName = '', isGoogle = false, onLogout }) {
               special patterns. <strong>One last check before you graduate!</strong>
             </span>
           ),
+        }}
+      />
+    )
+  } else if (checkpoint === 26) {
+    screenEl = (
+      <ConceptLesson
+        {...lessonProps}
+        levels={FINAL_EXAM_LEVELS}
+        isReview
+        passPct={80}
+        intro={{
+          icon: '🎓',
+          eyebrow: 'Final Exam · Everything you’ve learned',
+          title: 'The Final Exam!',
+          blurb: (
+            <span>
+              This one covers <strong>everything</strong> — foundations, graphs, exponents, and
+              polynomials. Score <strong>80% or higher</strong> to graduate. You've got this!
+            </span>
+          ),
+          cta: 'Start the exam →',
         }}
       />
     )

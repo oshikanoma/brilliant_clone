@@ -20,7 +20,7 @@ function shuffle(arr) {
 export const LEVELS = [
   {
     id: 'fac-1',
-    topic: 'Factoring Polynomials',
+    topic: 'Sum to 3',
     prompt: 'Factor:  x² + 3x + 2',
     options: ['(x + 1)(x + 2)', '(x + 1)(x + 1)', '(x + 2)(x + 2)', '(x + 1)(x + 3)'],
     correct: 0,
@@ -28,7 +28,7 @@ export const LEVELS = [
   },
   {
     id: 'fac-2',
-    topic: 'Factoring Polynomials',
+    topic: 'Sum to 5',
     prompt: 'Factor:  x² + 5x + 6',
     options: ['(x + 2)(x + 3)', '(x + 1)(x + 6)', '(x + 2)(x + 4)', '(x + 1)(x + 5)'],
     correct: 0,
@@ -36,7 +36,7 @@ export const LEVELS = [
   },
   {
     id: 'fac-3',
-    topic: 'Factoring Polynomials',
+    topic: 'Sum to 7',
     prompt: 'Factor:  x² + 7x + 12',
     options: ['(x + 3)(x + 4)', '(x + 2)(x + 6)', '(x + 1)(x + 12)', '(x + 5)(x + 2)'],
     correct: 0,
@@ -44,7 +44,7 @@ export const LEVELS = [
   },
   {
     id: 'fac-4',
-    topic: 'Factoring Polynomials',
+    topic: 'Sum to 8',
     prompt: 'Factor:  x² + 8x + 15',
     options: ['(x + 3)(x + 5)', '(x + 1)(x + 15)', '(x + 4)(x + 4)', '(x + 2)(x + 6)'],
     correct: 0,
@@ -52,7 +52,7 @@ export const LEVELS = [
   },
   {
     id: 'fac-5',
-    topic: 'Factoring Polynomials',
+    topic: 'Sum to 11',
     prompt: 'Factor:  x² + 11x + 24',
     options: ['(x + 3)(x + 8)', '(x + 4)(x + 6)', '(x + 2)(x + 12)', '(x + 1)(x + 24)'],
     correct: 0,

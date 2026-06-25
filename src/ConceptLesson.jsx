@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import OwlSpeech from './OwlSpeech.jsx'
 import MakeupDots from './MakeupDots.jsx'
 import { useMakeup, missedIndicesFrom } from './useMakeup.js'
-import { shuffleAll } from './shuffleChoices.js'
+import { shuffleAll, shuffleChoices } from './shuffleChoices.js'
 
 // A reusable multiple-choice lesson engine that powers every "Expressions with
 // Exponents" and "Quadratics and Polynomials" checkpoint (and their section
@@ -11,12 +11,17 @@ import { shuffleAll } from './shuffleChoices.js'
 //   IntroComponent  - an animated concept cutscene (rendered first), OR
 //   intro           - a simple static intro object { icon, eyebrow, title, blurb }
 //   generateLike    - (level) => { prompt, options, correct, explain } for make-up
-//   isReview        - true for section reviews (80% to pass, no make-up)
+//   isReview        - true for section reviews (changes summary wording only)
+//   passPct         - if set (e.g. 80), the checkpoint is a pass/fail exam scored
+//                     on first-try correctness instead of using the make-up flow
 //
-// Concept checkpoints: the student must answer each level correctly to advance
-// (wrong attempts are remembered), then make up every missed level by answering
-// three freshly generated similar questions. Reviews instead require 80% correct
-// on the first try and offer a retry.
+// Most checkpoints work the same way: the student must answer each level
+// correctly to advance (wrong attempts are remembered), then make up every
+// missed level by answering three in a row. Concept checkpoints draw freshly
+// generated similar questions for make-up; reviews (no generateLike) re-ask the
+// missed question with its options reshuffled. When `passPct` is set, the
+// checkpoint is instead a cumulative exam: score ≥ passPct on the first try of
+// each question to pass, otherwise retry the whole thing.
 
 function MakeupMC({ question, onResult }) {
   const [choice, setChoice] = useState(null)
@@ -94,6 +99,7 @@ export default function ConceptLesson({
   intro = null,
   generateLike = null,
   isReview = false,
+  passPct = null,
   value,
   onChange,
 }) {
@@ -110,15 +116,18 @@ export default function ConceptLesson({
   const [showIntro, setShowIntro] = useState(qIndex === 0 && !(results[0]?.solved))
   const [mkDone, setMkDone] = useState(false)
 
+  // Every checkpoint enforces make-up: a missed question must be earned back by
+  // answering three in a row. Concept checkpoints generate fresh similar
+  // questions; reviews (no generator) re-ask the missed question with its
+  // options reshuffled.
   const makeup = useMakeup(
-    (idx) => (generateLike ? generateLike(levels[idx]) : null),
+    (idx) => (generateLike ? generateLike(levels[idx]) : shuffleChoices(levels[idx])),
     () => setMkDone(true)
   )
 
   const question = levels[qIndex]
   const solved = !!qResult.solved
   const isLast = qIndex === levels.length - 1
-  const canMakeup = !isReview && typeof generateLike === 'function'
 
   const submit = () => {
     if (choice == null || solved) return
@@ -139,6 +148,7 @@ export default function ConceptLesson({
     onChange({ levelIndex: qIndex + 1, results })
   }
 
+  // Exam mode (passPct set): a failing score replays the whole exam from scratch.
   const retry = () => {
     setChoice(null)
     setLastResult(null)
@@ -186,8 +196,8 @@ export default function ConceptLesson({
     )
   }
 
-  // ---- Make-up flow (concept checkpoints only) ----
-  if (showSummary && canMakeup && makeup.active) {
+  // ---- Make-up flow ----
+  if (showSummary && passPct == null && makeup.active) {
     return (
       <div className="app">
         {Header}
@@ -217,19 +227,17 @@ export default function ConceptLesson({
       (n, _, i) => n + (results[i]?.solved && !results[i]?.wrong ? 1 : 0),
       0
     )
-    const missed = missedIndicesFrom(results, levels.length)
-    const pct = Math.round((correctCount / total) * 100)
-
-    // Concept checkpoints pass once everything is made up.
-    if (canMakeup) {
-      const cleared = mkDone || missed.length === 0
+    // Exam mode: pass/fail by first-try score, no make-up.
+    if (passPct != null) {
+      const pct = Math.round((correctCount / total) * 100)
+      const passed = pct >= passPct
       return (
         <div className="app">
           {Header}
           <div className="summary">
-            <p className="summary__eyebrow">Checkpoint complete</p>
-            <div className={`summary__score ${cleared ? 'summary__score--pass' : 'summary__score--fail'}`}>
-              {correctCount}/{total}
+            <p className="summary__eyebrow">Final exam complete</p>
+            <div className={`summary__score ${passed ? 'summary__score--pass' : 'summary__score--fail'}`}>
+              {pct}%
             </div>
             <p className="summary__count">{correctCount} of {total} correct on the first try</p>
             <ul className="summary__list">
@@ -246,10 +254,10 @@ export default function ConceptLesson({
                 )
               })}
             </ul>
-            {cleared ? (
+            {passed ? (
               <>
                 <p className="summary__msg summary__msg--pass">
-                  Nice work — that skill is locked in. The next checkpoint is unlocked!
+                  You passed the final exam with {pct}%! Head back to the path to walk the stage.
                 </p>
                 <button className="btn" onClick={onPass ?? onBack}>
                   Back to path →
@@ -258,11 +266,10 @@ export default function ConceptLesson({
             ) : (
               <>
                 <p className="summary__msg summary__msg--todo">
-                  You missed {missed.length} — make {missed.length === 1 ? 'it' : 'them'} up by
-                  answering three similar questions in a row for each.
+                  You need {passPct}% to pass the final exam. You scored {pct}% — give it another run.
                 </p>
-                <button className="btn" onClick={() => makeup.start(missed)}>
-                  Start make-up →
+                <button className="btn" onClick={retry}>
+                  Retake the exam →
                 </button>
               </>
             )}
@@ -271,15 +278,16 @@ export default function ConceptLesson({
       )
     }
 
-    // Reviews: 80% to pass, otherwise retry.
-    const passed = pct >= 80
+    const missed = missedIndicesFrom(results, levels.length)
+    // Pass only once every missed question has been made up (3 in a row each).
+    const cleared = mkDone || missed.length === 0
     return (
       <div className="app">
         {Header}
         <div className="summary">
-          <p className="summary__eyebrow">Review complete</p>
-          <div className={`summary__score ${passed ? 'summary__score--pass' : 'summary__score--fail'}`}>
-            {pct}%
+          <p className="summary__eyebrow">{isReview ? 'Review complete' : 'Checkpoint complete'}</p>
+          <div className={`summary__score ${cleared ? 'summary__score--pass' : 'summary__score--fail'}`}>
+            {correctCount}/{total}
           </div>
           <p className="summary__count">{correctCount} of {total} correct on the first try</p>
           <ul className="summary__list">
@@ -296,10 +304,12 @@ export default function ConceptLesson({
               )
             })}
           </ul>
-          {passed ? (
+          {cleared ? (
             <>
               <p className="summary__msg summary__msg--pass">
-                Excellent — you've mastered this section. The next one is unlocked!
+                {isReview
+                  ? "Excellent — you've mastered this section. The next one is unlocked!"
+                  : 'Nice work — that skill is locked in. The next checkpoint is unlocked!'}
               </p>
               <button className="btn" onClick={onPass ?? onBack}>
                 Back to path →
@@ -308,10 +318,11 @@ export default function ConceptLesson({
           ) : (
             <>
               <p className="summary__msg summary__msg--todo">
-                You need 80% to pass the review. Give it another run — you've got this!
+                You missed {missed.length} — make {missed.length === 1 ? 'it' : 'them'} up by
+                answering three in a row for each to lock {missed.length === 1 ? 'it' : 'them'} in.
               </p>
-              <button className="btn" onClick={retry}>
-                Try the review again →
+              <button className="btn" onClick={() => makeup.start(missed)}>
+                Start make-up →
               </button>
             </>
           )}
@@ -412,7 +423,7 @@ export default function ConceptLesson({
 
         {!solved && (
           <p className="lesson-hint">
-            {isReview
+            {isReview || passPct != null
               ? 'Choose the answer you think is right, then Submit.'
               : 'Choose the right answer to continue — get it correct to move on.'}
           </p>

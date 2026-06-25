@@ -16,7 +16,7 @@ const shuffle = (arr) => {
 export const LEVELS = [
   {
     id: 'dos-9',
-    topic: 'Difference of Squares',
+    topic: 'Subtract 9',
     prompt: 'Factor:  x² − 9',
     options: ['(x + 3)(x − 3)', '(x − 3)²', '(x + 3)²', '(x − 9)(x + 1)'],
     correct: 0,
@@ -24,7 +24,7 @@ export const LEVELS = [
   },
   {
     id: 'dos-25',
-    topic: 'Difference of Squares',
+    topic: 'Subtract 25',
     prompt: 'Factor:  x² − 25',
     options: ['(x + 5)(x − 5)', '(x − 5)²', '(x + 5)²', '(x − 25)(x + 1)'],
     correct: 0,
@@ -32,7 +32,7 @@ export const LEVELS = [
   },
   {
     id: 'dos-49',
-    topic: 'Difference of Squares',
+    topic: 'Subtract 49',
     prompt: 'Factor:  x² − 49',
     options: ['(x + 7)(x − 7)', '(x + 7)²', '(x − 7)²', '(x + 49)(x − 1)'],
     correct: 0,
@@ -40,7 +40,7 @@ export const LEVELS = [
   },
   {
     id: 'dos-4x2-9',
-    topic: 'Difference of Squares',
+    topic: 'With Coefficient',
     prompt: 'Factor:  4x² − 9',
     options: ['(2x + 3)(2x − 3)', '(2x − 3)²', '(2x + 3)²', '(4x + 3)(x − 3)'],
     correct: 0,
@@ -48,7 +48,7 @@ export const LEVELS = [
   },
   {
     id: 'dos-x4-16',
-    topic: 'Difference of Squares',
+    topic: 'Fourth Power',
     prompt: 'Factor:  x⁴ − 16',
     options: ['(x² + 4)(x² − 4)', '(x² − 4)²', '(x² + 4)²', '(x² + 16)(x² − 1)'],
     correct: 0,

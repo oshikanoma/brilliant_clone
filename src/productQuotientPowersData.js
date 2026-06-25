@@ -9,7 +9,7 @@ const sup = (n) => String(n).replace(/-/g, '⁻').replace(/\d/g, (d) => '⁰¹²
 export const LEVELS = [
   {
     id: 'product',
-    topic: 'Powers of Products & Quotients',
+    topic: 'Power of a Product',
     prompt: 'Simplify:  (2x)³',
     options: ['8x³', '2x³', '6x³', '8x'],
     correct: 0,
@@ -17,7 +17,7 @@ export const LEVELS = [
   },
   {
     id: 'product-2',
-    topic: 'Powers of Products & Quotients',
+    topic: 'Square a Product',
     prompt: 'Simplify:  (3y)²',
     options: ['9y²', '6y²', '3y²', '9y'],
     correct: 0,
@@ -25,7 +25,7 @@ export const LEVELS = [
   },
   {
     id: 'quotient',
-    topic: 'Powers of Products & Quotients',
+    topic: 'Power of a Quotient',
     prompt: 'Simplify:  (x/y)²',
     options: ['x²/y²', 'x²/y', 'x/y²', '2x/2y'],
     correct: 0,
@@ -33,7 +33,7 @@ export const LEVELS = [
   },
   {
     id: 'product-nested',
-    topic: 'Powers of Products & Quotients',
+    topic: 'Three Factors',
     prompt: 'Simplify:  (2a²b)³',
     options: ['8a⁶b³', '6a⁶b³', '8a⁵b³', '8a⁶b'],
     correct: 0,
@@ -41,7 +41,7 @@ export const LEVELS = [
   },
   {
     id: 'quotient-nested',
-    topic: 'Powers of Products & Quotients',
+    topic: 'Nested Quotient',
     prompt: 'Simplify:  (x²/3)²',
     options: ['x⁴/9', 'x⁴/6', 'x⁴/3', '2x²/9'],
     correct: 0,

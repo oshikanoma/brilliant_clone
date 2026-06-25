@@ -16,7 +16,7 @@ const shuffle = (arr) => {
 export const LEVELS = [
   {
     id: 'psq-9',
-    topic: 'Perfect Squares',
+    topic: 'Square of 3',
     prompt: 'Factor:  x² + 6x + 9',
     options: ['(x + 3)²', '(x − 3)²', '(x + 9)²', '(x + 3)(x − 3)'],
     correct: 0,
@@ -24,7 +24,7 @@ export const LEVELS = [
   },
   {
     id: 'psq-25',
-    topic: 'Perfect Squares',
+    topic: 'Square of 5',
     prompt: 'Factor:  x² + 10x + 25',
     options: ['(x + 5)²', '(x − 5)²', '(x + 25)²', '(x + 5)(x − 5)'],
     correct: 0,
@@ -32,7 +32,7 @@ export const LEVELS = [
   },
   {
     id: 'psq-minus-16',
-    topic: 'Perfect Squares',
+    topic: 'Negative Middle',
     prompt: 'Factor:  x² − 8x + 16',
     options: ['(x − 4)²', '(x + 4)²', '(x − 16)²', '(x − 4)(x + 4)'],
     correct: 0,
@@ -40,7 +40,7 @@ export const LEVELS = [
   },
   {
     id: 'psq-49',
-    topic: 'Perfect Squares',
+    topic: 'Square of 7',
     prompt: 'Factor:  x² + 14x + 49',
     options: ['(x + 7)²', '(x − 7)²', '(x + 49)²', '(x + 7)(x − 7)'],
     correct: 0,
@@ -48,7 +48,7 @@ export const LEVELS = [
   },
   {
     id: 'psq-4x2',
-    topic: 'Perfect Squares',
+    topic: 'With Coefficient',
     prompt: 'Factor:  4x² + 12x + 9',
     options: ['(2x + 3)²', '(2x − 3)²', '(4x + 3)²', '(2x + 3)(2x − 3)'],
     correct: 0,

@@ -19,7 +19,7 @@ function shuffle(arr) {
 export const LEVELS = [
   {
     id: 'add-1',
-    topic: 'Add Polynomials',
+    topic: 'Two Binomials',
     prompt: 'Add:  (2x² + 3x) + (x² + 5x)',
     options: ['3x² + 8x', '3x⁴ + 8x', '8x³', '2x² + 8x'],
     correct: 0,
@@ -27,7 +27,7 @@ export const LEVELS = [
   },
   {
     id: 'add-2',
-    topic: 'Add Polynomials',
+    topic: 'Combine Like Terms',
     prompt: 'Add:  (x² + 4x) + (3x² + x)',
     options: ['4x² + 5x', '4x² + 4x', '4x⁴ + 5x²', '3x² + 5x'],
     correct: 0,
@@ -35,7 +35,7 @@ export const LEVELS = [
   },
   {
     id: 'add-3',
-    topic: 'Add Polynomials',
+    topic: 'With Constants',
     prompt: 'Add:  (4x² + 2x + 1) + (x² + 3x + 5)',
     options: ['5x² + 5x + 6', '5x² + 6x + 5', '4x² + 5x + 6', '5x² + 5x + 5'],
     correct: 0,
@@ -43,7 +43,7 @@ export const LEVELS = [
   },
   {
     id: 'add-4',
-    topic: 'Add Polynomials',
+    topic: 'Cubic Terms',
     prompt: 'Add:  (3x³ + 2x²) + (x³ + 4x²)',
     options: ['4x³ + 6x²', '4x⁶ + 6x⁴', '4x⁵', '3x³ + 6x²'],
     correct: 0,
@@ -51,7 +51,7 @@ export const LEVELS = [
   },
   {
     id: 'add-5',
-    topic: 'Add Polynomials',
+    topic: 'Mind the Signs',
     prompt: 'Add:  (2x² + 5x + 7) + (4x² − 2x + 1)',
     options: ['6x² + 3x + 8', '6x² + 7x + 8', '6x² + 3x + 6', '6x⁴ + 3x + 8'],
     correct: 0,
