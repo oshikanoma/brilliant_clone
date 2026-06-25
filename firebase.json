@@ -7,6 +7,6 @@
         "supportEmail": "tiffanybaochaulam823@gmail.com"
       }
     },
-    "authorizedDomains": ["localhost"]
+    "authorizedDomains": ["localhost", "oshikanoma.github.io"]
   }
 }
