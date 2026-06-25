@@ -69,12 +69,12 @@ function PlacementOffer({ name, onTake, onSkip }) {
     <div className="intro">
       <div className="intro__icon" aria-hidden="true">🚀</div>
       <p className="intro__eyebrow">Welcome{name ? `, ${name}` : ''}</p>
-      <h2 className="intro__title">Already know the basics?</h2>
+      <h2 className="intro__title">Already know some of this?</h2>
       <p className="intro__blurb">
-        The <strong>Algebra Foundations</strong> section covers solving equations, order of
-        operations, like terms, the distributive property, and evaluating expressions. If you've
-        got those down, take a quick <strong>placement test</strong> — ace every question and
-        you'll skip straight to <strong>Graphs and Linear Relationships</strong>.
+        Take a quick <strong>adaptive placement test</strong>. Bruh picks each question based on how
+        you answer the last one — getting harder when you're right, easier when you're not — to find
+        exactly where you should start. Do well and you'll skip ahead, anywhere from
+        <strong> Graphs</strong> to <strong>Polynomials</strong>.
       </p>
       <div className="placement-offer__actions">
         <button className="btn intro__btn" onClick={onTake}>
@@ -274,12 +274,20 @@ function Session({ username, defaultName = '', isGoogle = false, onLogout }) {
 
   const lastIndex = CHECKPOINTS.length - 1
 
-  // Test-out: mark the whole Algebra Foundations section (checkpoints 0–5)
-  // complete and unlock the first Graphs checkpoint (index 6).
-  const skipFoundations = () => {
-    setCompleted({ 0: true, 1: true, 2: true, 3: true, 4: true, 5: true })
-    setUnlocked(7)
-    setCheckpoint(6)
+  // Adaptive placement: mark every checkpoint up to (and including)
+  // `completedThrough` complete, unlock the next one, and drop the student there.
+  // A value < 0 means "start from the very beginning".
+  const applyPlacement = (completedThrough) => {
+    if (!Number.isInteger(completedThrough) || completedThrough < 0) {
+      setCheckpoint(0)
+      setScreen('path')
+      return
+    }
+    const done = {}
+    for (let i = 0; i <= completedThrough; i++) done[i] = true
+    setCompleted(done)
+    setUnlocked(Math.min(CHECKPOINTS.length, completedThrough + 2))
+    setCheckpoint(Math.min(CHECKPOINTS.length - 1, completedThrough + 1))
     setScreen('path')
   }
 
@@ -355,12 +363,7 @@ function Session({ username, defaultName = '', isGoogle = false, onLogout }) {
     )
   } else if (screen === 'placement') {
     screenEl = (
-      <PlacementTest
-        onExit={(passed) => {
-          if (passed) skipFoundations()
-          else setScreen('path')
-        }}
-      />
+      <PlacementTest onExit={(completedThrough) => applyPlacement(completedThrough)} />
     )
   } else if (screen === 'path') {
     screenEl = (

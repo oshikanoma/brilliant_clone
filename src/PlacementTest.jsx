@@ -1,97 +1,132 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import OwlSpeech from './OwlSpeech.jsx'
-import { shuffleAll } from './shuffleChoices.js'
+import { shuffleChoices } from './shuffleChoices.js'
+import { CURRICULUM, pickQuestion } from './placementBank.js'
+import { decideNextStep } from './placementClient.js'
+import { CHECKPOINTS } from './LessonPath.jsx'
 
-// A short placement test offered to brand-new accounts. It mirrors the Review
-// checkpoint (one question per foundational skill) and gives feedback after
-// every answer. Acing it on the first try lets the student test out of the
-// whole Algebra Foundations module and jump straight to graphs.
+// Adaptive placement test. Instead of a fixed list of questions, an AI engine
+// (server-side, with a local binary-search fallback) looks at the student's
+// answers so far and decides which checkpoint to probe next — zeroing in on the
+// hardest thing they can do. When it has enough evidence it places the student
+// anywhere along the path by reporting `completedThrough`, and the app marks all
+// checkpoints up to there complete. Each question comes from a curated bank, so
+// the math is always correct; the AI only chooses *which* topic to ask.
 
-const BASE_QUESTIONS = [
-  {
-    id: 'solve',
-    topic: 'Solving Equations',
-    prompt: 'Solve for x:  2x = 10',
-    options: ['x = 5', 'x = 20', 'x = 8', 'x = 12'],
-    correct: 0,
-    explain: 'Divide both sides by 2: x = 10 ÷ 2 = 5.',
-  },
-  {
-    id: 'order1',
-    topic: 'Order of Operations',
-    prompt: 'Simplify:  6 + 2 × 5',
-    options: ['16', '40', '20', '13'],
-    correct: 0,
-    explain: 'Multiply before adding: 2 × 5 = 10, then 6 + 10 = 16.',
-  },
-  {
-    id: 'order2',
-    topic: 'Order of Operations',
-    prompt: 'Simplify:  (8 − 3) × 2',
-    options: ['10', '5', '2', '13'],
-    correct: 0,
-    explain: 'Parentheses first: 8 − 3 = 5, then 5 × 2 = 10.',
-  },
-  {
-    id: 'liketerms',
-    topic: 'Combining Like Terms',
-    prompt: 'Combine like terms:  4a + 2a − 3',
-    options: ['6a − 3', '6a', '3a', '6a + 3'],
-    correct: 0,
-    explain: 'Add the a-terms: 4a + 2a = 6a. The −3 has no like term, so it stays.',
-  },
-  {
-    id: 'distribute',
-    topic: 'Distributive Property',
-    prompt: 'Expand:  3(x + 2)',
-    options: ['3x + 6', '3x + 2', 'x + 6', '3x + 5'],
-    correct: 0,
-    explain: 'Multiply 3 by each term inside: 3·x + 3·2 = 3x + 6.',
-  },
-  {
-    id: 'evaluate',
-    topic: 'Evaluating Expressions',
-    prompt: 'If x = 4, what is  2x + 1 ?',
-    options: ['9', '7', '24', '6'],
-    correct: 0,
-    explain: '2 × 4 + 1 = 8 + 1 = 9.',
-  },
-]
+const floorOf = (history) => {
+  const correct = history.filter((h) => h.correct).map((h) => h.checkpointIndex)
+  return correct.length ? Math.max(...correct) : -1
+}
 
 export default function PlacementTest({ onExit }) {
-  // Shuffle each question's options once per attempt so the answer isn't always first.
-  const QUESTIONS = useMemo(() => shuffleAll(BASE_QUESTIONS), [])
-  const [qIndex, setQIndex] = useState(0)
+  const [phase, setPhase] = useState('thinking') // 'thinking' | 'question' | 'summary'
+  const [history, setHistory] = useState([])
+  const [current, setCurrent] = useState(null) // { checkpointIndex, topic, section, question }
   const [choice, setChoice] = useState(null)
   const [locked, setLocked] = useState(false)
   const [wasCorrect, setWasCorrect] = useState(null)
-  // Track first-try correctness per question id.
-  const [firstTry, setFirstTry] = useState({})
-  const [showSummary, setShowSummary] = useState(false)
+  const [placement, setPlacement] = useState(null) // { completedThrough, message, source }
 
-  const question = QUESTIONS[qIndex]
-  const isLast = qIndex === QUESTIONS.length - 1
+  const usedIds = useRef(new Set())
+  const started = useRef(false)
 
-  const submit = () => {
-    if (choice == null || locked) return
-    const ok = choice === question.correct
-    setWasCorrect(ok)
-    setLocked(true)
-    setFirstTry((prev) => ({ ...prev, [question.id]: ok }))
-  }
+  // Ask the engine what to do next given the running history.
+  const requestNext = async (hist) => {
+    setPhase('thinking')
+    const decision = await decideNextStep({ history: hist, curriculum: CURRICULUM })
 
-  const goNext = () => {
+    if (decision.action === 'place') {
+      setPlacement({
+        completedThrough: Number.isInteger(decision.completedThrough) ? decision.completedThrough : floorOf(hist),
+        message: decision.message,
+        source: decision.source,
+      })
+      setPhase('summary')
+      return
+    }
+
+    const meta = CURRICULUM.find((c) => c.checkpointIndex === decision.checkpointIndex)
+    const base = meta ? pickQuestion(decision.checkpointIndex, usedIds.current) : null
+    if (!meta || !base) {
+      // Nothing left to ask for this checkpoint — place at the current floor.
+      setPlacement({ completedThrough: floorOf(hist), source: decision.source })
+      setPhase('summary')
+      return
+    }
+
+    usedIds.current.add(base.id)
+    setCurrent({
+      checkpointIndex: decision.checkpointIndex,
+      topic: meta.topic,
+      section: meta.section,
+      question: shuffleChoices(base),
+    })
     setChoice(null)
     setLocked(false)
     setWasCorrect(null)
-    if (isLast) setShowSummary(true)
-    else setQIndex((i) => i + 1)
+    setPhase('question')
   }
 
-  // ---- Summary / verdict ----
-  if (showSummary) {
-    const correctCount = QUESTIONS.reduce((n, q) => n + (firstTry[q.id] ? 1 : 0), 0)
-    const passed = correctCount === QUESTIONS.length
+  // Kick off the first probe once (guarded against StrictMode double-invoke).
+  useEffect(() => {
+    if (started.current) return
+    started.current = true
+    requestNext([])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const submit = () => {
+    if (choice == null || locked) return
+    setWasCorrect(choice === current.question.correct)
+    setLocked(true)
+  }
+
+  const goNext = () => {
+    const next = [
+      ...history,
+      { checkpointIndex: current.checkpointIndex, topic: current.topic, correct: wasCorrect },
+    ]
+    setHistory(next)
+    requestNext(next)
+  }
+
+  // ---- Thinking / loading ----
+  if (phase === 'thinking') {
+    return (
+      <div className="app">
+        <header className="app__header app__header--lesson">
+          <h1>Placement test</h1>
+        </header>
+        <main className="order placement-thinking">
+          <OwlSpeech
+            tone="neutral"
+            text={
+              <strong>
+                {history.length === 0
+                  ? 'Let me find the right starting point for you…'
+                  : 'Nice — let me pick a good next question…'}
+              </strong>
+            }
+          />
+          <div className="placement-dots" aria-label="Thinking">
+            <span /><span /><span />
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  // ---- Summary / placement verdict ----
+  if (phase === 'summary') {
+    const ct = placement?.completedThrough ?? -1
+    const nextIdx = ct + 1
+    const startsAt = ct < 0 ? CHECKPOINTS[0] : CHECKPOINTS[nextIdx]
+    const defaultMsg =
+      ct < 0
+        ? "No worries at all — we'll start at the very beginning and build rock-solid foundations together."
+        : `You clearly know your stuff all the way through ${CHECKPOINTS[ct]}! I'll start you at ${startsAt} so you begin right where it gets interesting.`
+    const message = placement?.message || defaultMsg
+
     return (
       <div className="app">
         <header className="app__header app__header--lesson">
@@ -99,48 +134,35 @@ export default function PlacementTest({ onExit }) {
         </header>
         <div className="summary">
           <p className="summary__eyebrow">Placement complete</p>
-          <div className={`summary__score ${passed ? 'summary__score--pass' : 'summary__score--fail'}`}>
-            {correctCount}/{QUESTIONS.length}
+          <div className="summary__score summary__score--pass">
+            {ct < 0 ? 'Start' : `→ ${startsAt}`}
           </div>
-          <ul className="summary__list">
-            {QUESTIONS.map((q) => {
-              const ok = firstTry[q.id]
-              return (
-                <li key={q.id} className="summary__item">
-                  <span className={`summary__mark ${ok ? 'summary__mark--ok' : 'summary__mark--bad'}`}>
-                    {ok ? '✓' : ''}
+
+          {history.length > 0 && (
+            <ul className="summary__list">
+              {history.map((h, i) => (
+                <li key={`${h.checkpointIndex}-${i}`} className="summary__item">
+                  <span className={`summary__mark ${h.correct ? 'summary__mark--ok' : 'summary__mark--bad'}`}>
+                    {h.correct ? '✓' : '✕'}
                   </span>
-                  <span className="summary__title">{q.topic}</span>
+                  <span className="summary__title">{h.topic}</span>
                 </li>
-              )
-            })}
-          </ul>
-          {passed ? (
-            <>
-              <p className="summary__msg summary__msg--pass">
-                Whoa — a perfect score! You clearly know the foundations. I'll skip you straight
-                to <strong>Graphs and Linear Relationships</strong>.
-              </p>
-              <button className="btn" onClick={() => onExit(true)}>
-                Jump to graphs →
-              </button>
-            </>
-          ) : (
-            <>
-              <p className="summary__msg summary__msg--todo">
-                Close, but not a clean sweep — and that's totally fine! Let's build the foundations
-                properly so graphs feel easy later.
-              </p>
-              <button className="btn" onClick={() => onExit(false)}>
-                Start from the beginning →
-              </button>
-            </>
+              ))}
+            </ul>
           )}
+
+          <OwlSpeech tone="happy" text={<span>{message}</span>} />
+
+          <button className="btn" onClick={() => onExit(ct)}>
+            {ct < 0 ? 'Start from the beginning →' : 'Jump in →'}
+          </button>
         </div>
       </div>
     )
   }
 
+  // ---- Question ----
+  const question = current.question
   let tone = null
   let feedback = ''
   if (locked) {
@@ -155,24 +177,13 @@ export default function PlacementTest({ onExit }) {
       </header>
 
       <div className="level-head">
-        <div
-          className="progress"
-          role="progressbar"
-          aria-valuenow={qIndex + 1}
-          aria-valuemin={1}
-          aria-valuemax={QUESTIONS.length}
-        >
-          <div
-            className="progress__fill"
-            style={{ width: `${((qIndex + 1) / QUESTIONS.length) * 100}%` }}
-          />
-        </div>
-        <h2>{question.topic}</h2>
+        <p className="placement-count">Question {history.length + 1}</p>
+        <h2>{current.topic}</h2>
       </div>
 
       <main className="order">
         <OwlSpeech
-          text={<strong>Answer each one — get them all right and you can skip the fundamentals!</strong>}
+          text={<strong>I'm picking questions based on your answers — just do your best!</strong>}
           tone="neutral"
         />
 
@@ -218,7 +229,7 @@ export default function PlacementTest({ onExit }) {
           )}
           {locked && (
             <button className="btn" onClick={goNext}>
-              {isLast ? 'See results →' : 'Next →'}
+              Next →
             </button>
           )}
         </div>
