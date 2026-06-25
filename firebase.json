@@ -7,6 +7,11 @@
         "supportEmail": "tiffanybaochaulam823@gmail.com"
       }
     },
-    "authorizedDomains": ["localhost", "oshikanoma.github.io"]
+    "authorizedDomains": [
+      "localhost",
+      "algebruh-2606241348.firebaseapp.com",
+      "algebruh-2606241348.web.app",
+      "oshikanoma.github.io"
+    ]
   }
 }
