@@ -2,6 +2,9 @@ import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 
 import { LIKE_TERMS_LEVELS } from './likeTermsLevels.js'
 import Whiteboard from './Whiteboard.jsx'
 import OwlSpeech from './OwlSpeech.jsx'
+import LikeTermsIntro from './LikeTermsIntro.jsx'
+import MakeupDots from './MakeupDots.jsx'
+import { useMakeup, missedIndicesFrom } from './useMakeup.js'
 
 const genId = () => Math.random().toString(36).slice(2, 9)
 const rint = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1))
@@ -110,6 +113,271 @@ function genSolve(difficulty) {
   return { terms: display, correct, options }
 }
 
+// Generate a fresh combine-like-terms puzzle in the same mode/difficulty as
+// `level`. Both modes reuse genSolve's term generation (which always yields
+// combinable groups); solve mode also keeps its multiple-choice options.
+function generateLike(level) {
+  if (level.mode === 'solve') {
+    const g = genSolve(level.difficulty)
+    return { mode: 'solve', difficulty: level.difficulty, terms: g.terms, correct: g.correct, options: g.options }
+  }
+  const difficulty = (level.spec?.length ?? 0) >= 6 ? 'medium' : 'easy'
+  const g = genSolve(difficulty)
+  return { mode: 'identify', difficulty, terms: g.terms }
+}
+
+// One generated like-terms question for the make-up flow.
+function LikeTermsMakeupPlayer({ level, onResult }) {
+  const isSolve = level.mode === 'solve'
+  const [terms, setTerms] = useState(level.terms)
+  const [anchorA, setAnchorA] = useState(null)
+  const [anchorB, setAnchorB] = useState(null)
+  const [cursor, setCursor] = useState(null)
+  const [choice, setChoice] = useState(null)
+  const [result, setResult] = useState(null)
+  const [wrongMsg, setWrongMsg] = useState(null)
+  const [lastOk, setLastOk] = useState(false)
+  const [everWrong, setEverWrong] = useState(false)
+  const areaRef = useRef(null)
+  const dotRefs = useRef({})
+  const [dotPos, setDotPos] = useState({})
+
+  useLayoutEffect(() => {
+    if (isSolve) return
+    const measure = () => {
+      const area = areaRef.current
+      if (!area) return
+      const base = area.getBoundingClientRect()
+      const pos = {}
+      for (const t of terms) {
+        const el = dotRefs.current[t.id]
+        if (!el) continue
+        const r = el.getBoundingClientRect()
+        pos[t.id] = { x: r.left - base.left + r.width / 2, y: r.top - base.top + r.height / 2 }
+      }
+      setDotPos(pos)
+    }
+    measure()
+    const raf = requestAnimationFrame(measure)
+    window.addEventListener('resize', measure)
+    if (document.fonts?.ready) document.fonts.ready.then(measure)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('resize', measure)
+    }
+  }, [terms, isSolve])
+
+  // ---- Solve mode ----
+  if (isSolve) {
+    const isCorrect = choice === level.correct
+    const locked = result === 'correct'
+    const canSubmit = !locked && choice != null
+    const submit = () => {
+      if (!canSubmit) return
+      if (isCorrect) setResult('correct')
+      else {
+        setResult('wrong')
+        setEverWrong(true)
+      }
+    }
+    let resultTone = null
+    let resultText = ''
+    if (result === 'correct') {
+      resultTone = 'ok'
+      resultText = `✓ Correct! The simplified form is ${level.correct}.`
+    } else if (result === 'wrong') {
+      const chosen = (level.options ?? []).find((o) => (typeof o === 'string' ? o : o.text) === choice)
+      resultTone = 'bad'
+      resultText =
+        (chosen && typeof chosen !== 'string' ? chosen.why : null) ??
+        'Not quite — combine each group of like terms by adding the numbers in front.'
+    }
+    return (
+      <main className="order">
+        <OwlSpeech text={<strong>Combine the like terms, then choose the simplified form.</strong>} tone="neutral" />
+        <div className="terms-area terms-area--solve">
+          <div className="terms-row">
+            {terms.map((t, i) => (
+              <Fragment key={t.id}>
+                <div className="term-col">
+                  <span className="term">{termText(t)}</span>
+                </div>
+                {i < terms.length - 1 && <span className="term__plus">+</span>}
+              </Fragment>
+            ))}
+          </div>
+        </div>
+        <p className="solve-hint">Now you try! Try writing on the whiteboard below.</p>
+        <Whiteboard />
+        <div className="choices" role="group" aria-label="Choose the simplified expression">
+          {(level.options ?? []).map((opt) => {
+            const text = typeof opt === 'string' ? opt : opt.text
+            return (
+              <button
+                key={text}
+                type="button"
+                className={'choice' + (choice === text ? ' choice--sel' : '')}
+                disabled={locked}
+                onClick={() => {
+                  setChoice(text)
+                  setResult(null)
+                }}
+              >
+                {text}
+              </button>
+            )
+          })}
+        </div>
+        {resultText && (
+          <p className={`answer-feedback answer-feedback--${resultTone}`} role="status" aria-live="polite">
+            {resultText}
+          </p>
+        )}
+        <div className="controls">
+          {canSubmit && (
+            <button className="btn" onClick={submit}>
+              Submit
+            </button>
+          )}
+          {locked && (
+            <button className="btn" onClick={() => onResult(!everWrong)}>
+              Next →
+            </button>
+          )}
+        </div>
+      </main>
+    )
+  }
+
+  // ---- Identify mode (rope like terms together) ----
+  const solved = !hasLikePair(terms)
+
+  const onDot = (id) => {
+    if (solved) return
+    setWrongMsg(null)
+    setLastOk(false)
+    if (anchorA == null) {
+      setAnchorA(id)
+      setAnchorB(null)
+    } else if (anchorB == null) {
+      if (id === anchorA) setAnchorA(null)
+      else setAnchorB(id)
+    } else {
+      setAnchorA(id)
+      setAnchorB(null)
+    }
+  }
+
+  const onAreaMove = (e) => {
+    if (anchorA == null || anchorB != null) return
+    const base = areaRef.current?.getBoundingClientRect()
+    if (!base) return
+    setCursor({ x: e.clientX - base.left, y: e.clientY - base.top })
+  }
+
+  const submitIdentify = () => {
+    if (anchorA == null || anchorB == null) return
+    const a = terms.find((t) => t.id === anchorA)
+    const b = terms.find((t) => t.id === anchorB)
+    if (!a || !b) return
+    if (a.varname === b.varname) {
+      const combined = { id: genId(), coef: a.coef + b.coef, varname: a.varname }
+      const next = terms.filter((t) => t.id !== b.id).map((t) => (t.id === a.id ? combined : t))
+      setTerms(next)
+      setAnchorA(null)
+      setAnchorB(null)
+      setWrongMsg(null)
+      setLastOk(true)
+    } else {
+      const aVar = a.varname === '' ? "no variable (it's a plain number)" : `variable ${a.varname}`
+      const bVar = b.varname === '' ? "no variable (it's a plain number)" : `variable ${b.varname}`
+      setWrongMsg(
+        `${termText(a)} and ${termText(b)} aren't like terms — ${termText(a)} has ${aVar}, while ${termText(b)} has ${bVar}. Only terms with the exact same variable can be roped together.`
+      )
+      setLastOk(false)
+      setEverWrong(true)
+      setAnchorA(null)
+      setAnchorB(null)
+    }
+  }
+
+  const ropePath = (p1, p2) => {
+    const mx = (p1.x + p2.x) / 2
+    const sag = Math.max(p1.y, p2.y) + 26 + Math.abs(p2.x - p1.x) * 0.04
+    return `M ${p1.x} ${p1.y} Q ${mx} ${sag} ${p2.x} ${p2.y}`
+  }
+
+  let resultTone = null
+  let resultText = ''
+  if (solved) {
+    resultTone = 'ok'
+    resultText = `✓ Fully combined! It simplifies to ${exprText(combineAll(terms))}.`
+  } else if (wrongMsg) {
+    resultTone = 'bad'
+    resultText = wrongMsg
+  } else if (lastOk) {
+    resultTone = 'ok'
+    resultText = '✓ Nice — those combined. Keep going.'
+  }
+
+  return (
+    <main className="order">
+      <OwlSpeech text={<strong>Rope two like terms together, then Submit.</strong>} tone="neutral" />
+      <div className="terms-area" ref={areaRef} onMouseMove={onAreaMove} onMouseLeave={() => setCursor(null)}>
+        <svg className="rope-layer" aria-hidden="true">
+          {anchorA != null && anchorB != null && dotPos[anchorA] && dotPos[anchorB] && (
+            <path className="rope rope--set" d={ropePath(dotPos[anchorA], dotPos[anchorB])} />
+          )}
+          {anchorA != null && anchorB == null && dotPos[anchorA] && cursor && (
+            <line
+              className="rope rope--live"
+              x1={dotPos[anchorA].x}
+              y1={dotPos[anchorA].y}
+              x2={cursor.x}
+              y2={cursor.y}
+            />
+          )}
+        </svg>
+        <div className="terms-row">
+          {terms.map((t, i) => (
+            <Fragment key={t.id}>
+              <div className="term-col">
+                <button
+                  type="button"
+                  ref={(el) => (dotRefs.current[t.id] = el)}
+                  className={'term__dot' + (anchorA === t.id || anchorB === t.id ? ' term__dot--active' : '')}
+                  onClick={() => onDot(t.id)}
+                  disabled={solved}
+                  aria-label={`Connect term ${termText(t)}`}
+                />
+                <span className="term">{termText(t)}</span>
+              </div>
+              {i < terms.length - 1 && <span className="term__plus">+</span>}
+            </Fragment>
+          ))}
+        </div>
+      </div>
+      {resultText && (
+        <p className={`answer-feedback answer-feedback--${resultTone}`} role="status" aria-live="polite">
+          {resultText}
+        </p>
+      )}
+      <div className="controls">
+        {!solved && anchorA != null && anchorB != null && (
+          <button className="btn" onClick={submitIdentify}>
+            Submit
+          </button>
+        )}
+        {solved && (
+          <button className="btn" onClick={() => onResult(!everWrong)}>
+            Next →
+          </button>
+        )}
+      </div>
+    </main>
+  )
+}
+
 export default function LikeTermsLesson({
   onBack,
   onPass,
@@ -143,6 +411,9 @@ export default function LikeTermsLesson({
   const [wrongWhy, setWrongWhy] = useState(null)
   const [showIntro, setShowIntro] = useState(levelIndex === 0 && value.terms == null)
   const [showSummary, setShowSummary] = useState(false)
+  const [mkDone, setMkDone] = useState(false)
+  const makeup = useMakeup((idx) => generateLike(LIKE_TERMS_LEVELS[idx]), () => setMkDone(true))
+  const missed = missedIndicesFrom(results, LIKE_TERMS_LEVELS.length)
 
   const areaRef = useRef(null)
   const dotRefs = useRef({})
@@ -299,16 +570,6 @@ export default function LikeTermsLesson({
     onChange({ levelIndex: levelIndex + 1, terms: null, options: null, correct: null, results })
   }
 
-  const retryLesson = () => {
-    setAnchorA(null)
-    setAnchorB(null)
-    setChoice(null)
-    setLastResult(null)
-    setWrongWhy(null)
-    setShowSummary(false)
-    onChange({ levelIndex: 0, terms: null, options: null, correct: null, results: {} })
-  }
-
   // ---- Intro screen ----
   if (showIntro) {
     return (
@@ -319,21 +580,48 @@ export default function LikeTermsLesson({
           </button>
           <h1>{lessonTitle}</h1>
         </header>
-        <div className="intro">
-          <div className="intro__icon" aria-hidden="true">🪢</div>
-          <p className="intro__eyebrow">Before we start</p>
-          <h2 className="intro__title">Tidy up an expression by combining like terms.</h2>
-          <p className="intro__blurb">
-            A <strong>term</strong> is a single piece of an expression, like <strong>3x</strong>,{' '}
-            <strong>2y</strong>, or a plain number like <strong>5</strong>. Terms are{' '}
-            <strong>“like”</strong> when they share the exact same variable — so <strong>3x</strong>{' '}
-            and <strong>2x</strong> are alike, but <strong>3x</strong> and <strong>2y</strong> are
-            not. Like terms can be added together by adding their coefficients (the numbers in
-            front), which makes a long expression shorter and simpler without changing its value. In
-            these puzzles you’ll rope matching terms together and watch them merge.
+        <LikeTermsIntro onDone={() => setShowIntro(false)} />
+      </div>
+    )
+  }
+
+  // ---- Make-up screen ----
+  if (makeup.active) {
+    return (
+      <div className="app">
+        <header className="app__header app__header--lesson">
+          <button className="back-btn" onClick={onBack} aria-label="Back to path">
+            ← Path
+          </button>
+          <h1>{lessonTitle}</h1>
+        </header>
+        <div className="level-head">
+          <MakeupDots stars={makeup.stars} total={makeup.total} />
+          <h2>Make-up · {LIKE_TERMS_LEVELS[makeup.sourceIndex].title}</h2>
+        </div>
+        <LikeTermsMakeupPlayer key={makeup.seq} level={makeup.question} onResult={makeup.registerResult} />
+      </div>
+    )
+  }
+
+  // ---- All caught up ----
+  if (mkDone) {
+    return (
+      <div className="app">
+        <header className="app__header app__header--lesson">
+          <button className="back-btn" onClick={onBack} aria-label="Back to path">
+            ← Path
+          </button>
+          <h1>{lessonTitle}</h1>
+        </header>
+        <div className="summary">
+          <p className="summary__eyebrow">All caught up</p>
+          <div className="summary__score summary__score--pass">★</div>
+          <p className="summary__msg summary__msg--pass">
+            Nice — you made up everything you missed. Checkpoint complete!
           </p>
-          <button className="btn intro__btn" onClick={() => setShowIntro(false)}>
-            Next →
+          <button className="btn" onClick={onPass ?? onBack}>
+            Back to path →
           </button>
         </div>
       </div>
@@ -370,26 +658,28 @@ export default function LikeTermsLesson({
               return (
                 <li key={lvl.id} className="summary__item">
                   <span className={`summary__mark ${ok ? 'summary__mark--ok' : 'summary__mark--bad'}`}>
-                    {ok ? '✓' : '✗'}
+                    {ok ? '✓' : ''}
                   </span>
                   <span className="summary__title">{lvl.title}</span>
                 </li>
               )
             })}
           </ul>
-          {passed ? (
+          {missed.length === 0 ? (
             <>
               <p className="summary__msg summary__msg--pass">
-                Nice work — you passed! The next checkpoint is unlocked.
+                Perfect — you nailed every question! The next checkpoint is unlocked.
               </p>
               <button className="btn" onClick={onPass ?? onBack}>Back to path →</button>
             </>
           ) : (
             <>
-              <p className="summary__msg summary__msg--fail">
-                You scored below 80%. Retry the lesson to master it.
+              <p className="summary__msg summary__msg--todo">
+                Let's lock in the {missed.length} you missed — answer 3 similar questions for each.
               </p>
-              <button className="btn" onClick={retryLesson}>Retry lesson ↻</button>
+              <button className="btn" onClick={() => makeup.start(missed)}>
+                Let's see what we missed →
+              </button>
             </>
           )}
         </div>
@@ -462,7 +752,7 @@ export default function LikeTermsLesson({
         <OwlSpeech text={<strong>{questionText}</strong>} tone="neutral" />
 
         <div
-          className="terms-area"
+          className={'terms-area' + (level.mode === 'solve' ? ' terms-area--solve' : '')}
           ref={areaRef}
           onMouseMove={onAreaMove}
           onMouseLeave={() => setCursor(null)}
@@ -486,7 +776,7 @@ export default function LikeTermsLesson({
             {terms.map((t, i) => (
               <Fragment key={t.id}>
                 <div className="term-col">
-                  {level.mode === 'identify' ? (
+                  {level.mode === 'identify' && (
                     <button
                       type="button"
                       ref={(el) => (dotRefs.current[t.id] = el)}
@@ -498,8 +788,6 @@ export default function LikeTermsLesson({
                       disabled={solved}
                       aria-label={`Connect term ${termText(t)}`}
                     />
-                  ) : (
-                    <span className="term__dot term__dot--static" aria-hidden="true" />
                   )}
                   <span className="term">{termText(t)}</span>
                 </div>
@@ -561,7 +849,7 @@ export default function LikeTermsLesson({
           )}
           {solved && isLast && (
             <button className="btn" onClick={() => setShowSummary(true)}>
-              Finish lesson 🎉
+              Finish lesson
             </button>
           )}
         </div>

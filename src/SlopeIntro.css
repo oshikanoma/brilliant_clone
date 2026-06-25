@@ -1,0 +1,141 @@
+/* Styles for the animated "Slope" concept intro (SlopeIntro.jsx).
+   Reuses global classes from index.css (.ointro, .graph*, .bintro*, .btn);
+   everything here is scoped under .slintro so it can't clash. */
+
+.slintro__board {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Square stage that the SVG plane and the HTML owl overlay share, so the
+   percentage-positioned owl lines up exactly with the SVG coordinates. */
+.slintro__wrap {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  aspect-ratio: 1 / 1;
+}
+
+.slintro__graph {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The graphed line, swept in via a dash animation. */
+.slintro__line {
+  stroke: var(--text);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  fill: none;
+  stroke-dasharray: 520;
+  stroke-dashoffset: 520;
+  opacity: 0.85;
+}
+
+.slintro__line--in {
+  animation: slintro-draw 0.8s ease forwards;
+}
+
+@keyframes slintro-draw {
+  from { stroke-dashoffset: 520; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* Run (right) and rise (up/down) staircase arrows. */
+.slintro__run {
+  stroke: var(--weight);
+  stroke-width: 4;
+  stroke-linecap: round;
+  animation: slintro-arrow 0.32s ease both;
+}
+
+.slintro__rise {
+  stroke: var(--accent-dark);
+  stroke-width: 4;
+  stroke-linecap: round;
+  animation: slintro-arrow 0.32s ease both;
+}
+
+.slintro__runfill { fill: var(--weight); }
+.slintro__risefill { fill: var(--accent-dark); }
+
+@keyframes slintro-arrow {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.slintro__runlabel {
+  fill: var(--weight-edge);
+  font-size: 11px;
+  font-weight: 800;
+  text-anchor: middle;
+}
+
+.slintro__riselabel {
+  fill: var(--accent-dark);
+  font-size: 11px;
+  font-weight: 800;
+  text-anchor: start;
+}
+
+/* ---- Bruh, running along the line ---- */
+.slintro__owl {
+  position: absolute;
+  width: 0;
+  height: 0;
+  /* left/top are set inline (percent of the stage); transition makes Bruh
+     glide from one lattice point to the next. */
+  transition: left 0.6s cubic-bezier(0.45, 0.05, 0.4, 1),
+    top 0.6s cubic-bezier(0.45, 0.05, 0.4, 1);
+  z-index: 4;
+  pointer-events: none;
+}
+
+/* Native owl proportions (66x64) scaled down, feet resting on the point. */
+.slintro__owlinner {
+  position: absolute;
+  left: 0;
+  bottom: -4px;
+  width: 66px;
+  height: 64px;
+  transform: translateX(-50%) scale(0.6);
+  transform-origin: bottom center;
+}
+
+/* A little stepping bob while Bruh is on the move. */
+.slintro__owl--run .slintro__owlinner {
+  animation: slintro-step 0.31s ease-in-out infinite;
+}
+
+@keyframes slintro-step {
+  0%, 100% { transform: translateX(-50%) scale(0.6) translateY(0) rotate(-3deg); }
+  50% { transform: translateX(-50%) scale(0.6) translateY(-7px) rotate(3deg); }
+}
+
+/* slope = rise / run readout under the plane. */
+.slintro__readout {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--muted);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.slintro__readout--in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.slintro__readout strong {
+  color: var(--accent-dark);
+  font-size: 1.2rem;
+}
+
+.slintro__frac {
+  color: var(--text);
+  font-weight: 800;
+}

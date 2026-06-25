@@ -1,0 +1,109 @@
+/* Animated concept intro for Zero & Negative Exponents. Reuses the shared
+   `.ointro` / `.token` styles from index.css; the single-token / reciprocal
+   layout and the owl that hops onto the exponent live here. */
+
+.zne__board {
+  flex-direction: column;
+  gap: 1.25rem;
+  min-height: 170px;
+  padding: 1.5rem 1rem;
+}
+
+/* The stage holds the expression plus the absolutely-positioned owl that hops
+   above it. Extra top padding leaves room for the jump arc. */
+.zne__stage {
+  position: relative;
+  width: 100%;
+  padding-top: 60px;
+  display: flex;
+  justify-content: center;
+}
+
+.zne__eq {
+  position: relative;
+  gap: 0.1rem;
+}
+
+.zne__tok {
+  font-size: 2.4rem;
+  font-weight: 800;
+}
+
+/* Exponents ride a little higher and smaller than their base token. */
+.zne__exp {
+  font-size: 1.5rem;
+  align-self: flex-start;
+  margin-top: -0.3rem;
+}
+
+/* Reciprocal: 1 over x² laid out as a stacked fraction. */
+.zne__frac {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.zne__row {
+  display: inline-flex;
+  align-items: flex-start;
+  line-height: 1;
+}
+
+.zne__bar {
+  width: 100%;
+  min-width: 64px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--text);
+}
+
+/* Owl wrapper: pinned to the stage's top-left, translated onto the target token
+   center. The transition on transform is what makes the move a hop. */
+.zne__owl {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  z-index: 4;
+  opacity: 0;
+  transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+}
+
+.zne__owl--ready {
+  opacity: 1;
+}
+
+/* Vertical jump arc, replayed each hop via a changing React key. */
+.zne__owlhop {
+  position: absolute;
+  left: -23px;
+  top: -58px;
+  width: 46px;
+  height: 44px;
+  animation: zne-jump 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes zne-jump {
+  0% { transform: translateY(0); }
+  35% { transform: translateY(-30px); }
+  65% { transform: translateY(4px); }
+  100% { transform: translateY(0); }
+}
+
+/* Keep Bruh at native 66×64 proportions, scaled down and bottom-anchored. */
+.zne__owlbody {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 66px;
+  height: 64px;
+  transform: translateX(-50%) scale(0.7);
+  transform-origin: bottom center;
+}
+
+.zne__text {
+  min-height: 3.5em;
+}

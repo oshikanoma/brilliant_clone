@@ -1,0 +1,72 @@
+/* ---- Animated concept intro (Distributive Property) ---- */
+/* The stage holds the expression row with extra headroom up top so Bruh has
+   room to hop above the tokens. */
+.dintro__board {
+  position: relative;
+  padding-top: 92px;
+  margin-bottom: 2rem;
+}
+
+/* Keep the expression on one line so token centers stay horizontally stable
+   for the owl to track. */
+.dintro__eq {
+  flex-wrap: nowrap;
+  justify-content: center;
+  overflow: visible;
+  max-width: none;
+  gap: 0.15rem;
+}
+
+.dintro__eq .token--static {
+  font-size: 1.55rem;
+  padding: 0.3rem 0.3rem;
+}
+
+/* A distributed/collapsed result chip (2x, 6) — green accent so the payoff
+   reads clearly against the plain tokens. */
+.dintro__tok--res {
+  color: var(--accent-dark);
+}
+
+.dintro__text {
+  margin-top: 0.5rem;
+}
+
+/* ---- Bruh, hopping above the expression ---- */
+.dintro__owl {
+  position: absolute;
+  top: 8px;
+  width: 54px;
+  height: 64px;
+  transform: translateX(-50%);
+  /* The horizontal hop between tokens; the vertical arc lives on the inner hop
+     element so the two can run together on each move. */
+  transition: left 0.55s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.dintro__owlhop {
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: dintro-hop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes dintro-hop {
+  0% { transform: translateY(0); }
+  30% { transform: translateY(-18px); }
+  62% { transform: translateY(3px); }
+  100% { transform: translateY(0); }
+}
+
+/* Keep the owl at its native 66×64 proportions, just scaled down. */
+.dintro__owlinner {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 66px;
+  height: 64px;
+  transform: translateX(-50%) scale(0.78);
+  transform-origin: bottom center;
+}

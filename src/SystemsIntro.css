@@ -1,0 +1,150 @@
+/* Animated concept intro for Systems of Equations.
+   Reuses the global .ointro / .graph* look; only the bits unique to this
+   choreography (the line-draw, the running owl overlay, the pulsing crossing
+   point, its label, and the pin drop) live here. */
+
+.sysintro__plane {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto 2rem;
+  aspect-ratio: 1 / 1;
+}
+
+.sysintro__svg {
+  display: block;
+}
+
+/* Each line "draws" itself from one end to the other. pathLength="1" lets us
+   normalise the dash math regardless of the line's real length. */
+.sysintro__line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: sysintro-draw 0.85s ease forwards;
+}
+
+@keyframes sysintro-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ---- The owl, overlaid on the plane ---- */
+.sysintro__owl {
+  position: absolute;
+  width: 0;
+  height: 0;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  z-index: 4;
+  transition: left 1.45s cubic-bezier(0.4, 0, 0.3, 1),
+    top 1.45s cubic-bezier(0.4, 0, 0.3, 1), opacity 0.35s ease;
+}
+
+.sysintro__owl--in {
+  opacity: 1;
+}
+
+/* Snap (no slide) when teleporting Bruh to the foot of the next line. */
+.sysintro__owl--instant {
+  transition: opacity 0.35s ease;
+}
+
+.sysintro__lean {
+  display: block;
+  transition: transform 0.3s ease;
+  transform-origin: bottom center;
+}
+
+.sysintro__bob {
+  display: block;
+}
+
+/* A quicker hop while running along a line. */
+.sysintro__bob--run {
+  animation: sysintro-run 0.32s ease-in-out infinite;
+}
+
+@keyframes sysintro-run {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.sysintro__owlinner {
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: 66px;
+  height: 64px;
+  transform: translateX(-50%) scale(0.62);
+  transform-origin: bottom center;
+}
+
+/* ---- Crossing point ---- */
+.sysintro__cross {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent-dark);
+  border: 3px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25);
+  transform: translate(-50%, -50%);
+  z-index: 5;
+}
+
+.sysintro__cross--pop {
+  animation: sysintro-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1),
+    sysintro-pulse 1.6s ease-out 0.4s 2;
+}
+
+@keyframes sysintro-pop {
+  0% { transform: translate(-50%, -50%) scale(0.2); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes sysintro-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(111, 168, 14, 0.55); }
+  100% { box-shadow: 0 0 0 16px rgba(111, 168, 14, 0); }
+}
+
+/* ---- Solution label ---- */
+.sysintro__coord {
+  position: absolute;
+  transform: translate(14px, -150%);
+  padding: 0.15rem 0.5rem;
+  background: var(--accent-dark);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 800;
+  border-radius: 8px;
+  white-space: nowrap;
+  z-index: 6;
+  animation: sysintro-label 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes sysintro-label {
+  0% { opacity: 0; transform: translate(14px, -120%) scale(0.6); }
+  100% { opacity: 1; transform: translate(14px, -150%) scale(1); }
+}
+
+/* ---- Pin drop (phase 2) ---- */
+.sysintro__pin {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: var(--accent-dark);
+  border: 3px solid #ffffff;
+  border-radius: 50% 50% 50% 0;
+  transform: translate(-50%, -100%) rotate(-45deg);
+  box-shadow: 0 3px 6px rgba(15, 23, 42, 0.3);
+  z-index: 7;
+  transform-origin: bottom center;
+  animation: sysintro-drop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes sysintro-drop {
+  0% { opacity: 0; transform: translate(-50%, -260%) rotate(-45deg) scale(0.7); }
+  70% { opacity: 1; transform: translate(-50%, -92%) rotate(-45deg) scale(1.05); }
+  100% { opacity: 1; transform: translate(-50%, -100%) rotate(-45deg) scale(1); }
+}

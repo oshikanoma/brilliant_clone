@@ -39,6 +39,11 @@ export default function Graph({
   b = 0,
   showLine = false,
   lineTone = 'target', // 'target' | 'ok'
+  // Optional second line, used by the systems-of-equations lesson.
+  m2 = null,
+  b2 = null,
+  showLine2 = false,
+  line2Tone = 'target',
   pins = [],
   onPlace,
   riseRun = null, // { run, rise, fromX, fromY }
@@ -59,6 +64,7 @@ export default function Graph({
   }
 
   const target = showLine ? lineBoxPoints(m, b) : null
+  const target2 = showLine2 && m2 != null && b2 != null ? lineBoxPoints(m2, b2) : null
 
   // Line through the two student pins (extended across the box).
   let userPts = null
@@ -142,6 +148,17 @@ export default function Graph({
           y1={sy(target[0].y)}
           x2={sx(target[1].x)}
           y2={sy(target[1].y)}
+        />
+      )}
+
+      {/* optional second line (systems of equations) */}
+      {target2 && target2.length === 2 && (
+        <line
+          className={'graph__line ' + (line2Tone === 'ok' ? 'graph__line--ok' : 'graph__line--line2')}
+          x1={sx(target2[0].x)}
+          y1={sy(target2[0].y)}
+          x2={sx(target2[1].x)}
+          y2={sy(target2[1].y)}
         />
       )}
 

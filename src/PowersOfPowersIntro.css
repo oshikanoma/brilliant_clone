@@ -1,0 +1,118 @@
+/* Animated concept intro for Powers of Powers. Builds on the shared `.ointro`
+   / `.token` styles in index.css; only the power layout and the owl-bounces-on-
+   the-outer-exponent choreography are defined here. Prefixed `ppow__`. */
+
+.ppow__board {
+  flex-direction: column;
+  gap: 1.25rem;
+  min-height: 150px;
+  padding: 1.5rem 1rem;
+}
+
+.ppow__stage {
+  position: relative;
+  width: 100%;
+  padding-top: 56px;
+  display: flex;
+  justify-content: center;
+}
+
+.ppow__eq {
+  position: relative;
+  gap: 0.3rem;
+  transition: gap 0.3s ease;
+}
+
+.ppow__eq .token--static {
+  transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+/* A power renders its base inline with a raised exponent. */
+.ppow__pow {
+  display: inline-flex;
+  align-items: flex-start;
+  line-height: 1;
+}
+
+.ppow__base {
+  font-size: 1.9rem;
+  font-weight: 800;
+}
+
+.ppow__exp,
+.ppow__outer {
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin-left: 1px;
+  padding: 0 2px;
+  border-radius: 7px;
+  transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+/* The outer exponent sits a touch higher and is the star of the bounce. */
+.ppow__outer {
+  align-self: flex-start;
+  margin-top: -2px;
+}
+
+/* Highlighted exponents get the shared hot-token pulse plus a little lift. */
+.ppow__eq .ppow__exp.ointro__tok--hot,
+.ppow__eq .ppow__outer.ointro__tok--hot {
+  background: var(--accent);
+  color: #1a2e05;
+  transform: translateY(-2px) scale(1.15);
+}
+
+.ppow__op {
+  align-self: center;
+  font-size: 1.9rem;
+}
+
+/* Owl wrapper: pinned to the row's left edge, slid horizontally to the target
+   token center. The transition on transform is what makes the move a hop. */
+.ppow__owl {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% - 50px);
+  width: 0;
+  height: 0;
+  z-index: 4;
+  opacity: 0;
+  transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+}
+
+.ppow__owl--ready {
+  opacity: 1;
+}
+
+/* Vertical jump arc, replayed each hop via a changing React key. */
+.ppow__owlhop {
+  position: absolute;
+  left: -23px;
+  bottom: 0;
+  width: 46px;
+  height: 44px;
+  animation: ppow-jump 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes ppow-jump {
+  0% { transform: translateY(0); }
+  35% { transform: translateY(-30px); }
+  65% { transform: translateY(4px); }
+  100% { transform: translateY(0); }
+}
+
+.ppow__owlbody {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 66px;
+  height: 64px;
+  transform: translateX(-50%) scale(0.7);
+  transform-origin: bottom center;
+}
+
+.ppow__text {
+  min-height: 3.5em;
+}

@@ -1,6 +1,11 @@
 import { Fragment, useMemo, useState } from 'react'
 import { DISTRIBUTIVE_LEVELS } from './distributiveLevels.js'
+import DistributiveIntro from './DistributiveIntro.jsx'
 import OwlSpeech from './OwlSpeech.jsx'
+import MakeupDots from './MakeupDots.jsx'
+import { useMakeup, missedIndicesFrom } from './useMakeup.js'
+
+const rint = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1))
 
 function shuffle(arr) {
   const a = [...arr]
@@ -73,6 +78,160 @@ function makeOptions(level) {
   return { correct, options }
 }
 
+// Generate a fresh distributive problem in the same style as the fixed levels.
+function generateLike() {
+  const multiplier = rint(2, 5)
+  const inside = [
+    { coef: rint(1, 3), varname: 'x' },
+    { coef: rint(1, 4), varname: '' },
+  ]
+  return {
+    id: 'mk',
+    multiplier,
+    inside,
+    title: 'Distribute',
+    instruction: `Distribute ${multiplier}(${exprText(inside)}): build the area, then choose the simplified expression.`,
+  }
+}
+
+// One generated distributive question for the make-up flow. Calls onResult(true)
+// on a correct pick and onResult(false) on a wrong one.
+function DistributiveMakeupPlayer({ level, onResult }) {
+  const { correct, options } = useMemo(() => makeOptions(level), [level])
+  const [groups, setGroups] = useState(0)
+  const [choice, setChoice] = useState(null)
+  const [result, setResult] = useState(null)
+  const [everWrong, setEverWrong] = useState(false)
+  const locked = result === 'correct'
+
+  const built = groups >= level.multiplier
+  const isCorrect = choice === correct
+  const xTiles =
+    level.inside.filter((t) => t.varname === 'x').reduce((n, t) => n + t.coef, 0) * groups
+  const unitTiles =
+    level.inside.filter((t) => t.varname === '').reduce((n, t) => n + t.coef, 0) * groups
+
+  let resultTone = null
+  let resultText = ''
+  if (result === 'correct') {
+    resultTone = 'ok'
+    resultText = `✓ Correct! ${problemText(level)} = ${correct}.`
+  } else if (result === 'wrong') {
+    resultTone = 'bad'
+    const chosen = options.find((o) => o.text === choice)
+    resultText = chosen?.why ?? 'Not quite — count every tile in the area, then multiply.'
+  }
+
+  return (
+    <main className="order">
+      <OwlSpeech text={<strong>{level.instruction}</strong>} tone="neutral" />
+
+      <div className="distrib__expr" aria-label="Expression to distribute">
+        <span className="distrib__mult">{level.multiplier}</span>
+        <span className="distrib__paren">(</span>
+        {level.inside.map((t, i) => (
+          <Fragment key={i}>
+            {i > 0 && <span className="distrib__plus">+</span>}
+            <span className={`distrib__term distrib__term--${t.varname === 'x' ? 'x' : 'unit'}`}>
+              {termText(t)}
+            </span>
+          </Fragment>
+        ))}
+        <span className="distrib__paren">)</span>
+      </div>
+
+      <div className="distrib__build">
+        <button
+          type="button"
+          className="multiplier"
+          onClick={() => !built && !locked && setGroups((g) => Math.min(level.multiplier, g + 1))}
+          disabled={built || locked}
+          aria-label={`Add one copy of the group (multiplier ${level.multiplier})`}
+        >
+          <span className="multiplier__sign">×{level.multiplier}</span>
+          <span className="multiplier__hint">{built ? 'Done' : 'Add group'}</span>
+          <span className="multiplier__count">{groups} / {level.multiplier}</span>
+        </button>
+
+        <div className="area" aria-label="Area model">
+          {Array.from({ length: level.multiplier }).map((_, row) => {
+            const filled = row < groups
+            return (
+              <div
+                key={row}
+                className={'area__row' + (filled ? ' area__row--filled' : ' area__row--ghost')}
+              >
+                {level.inside.flatMap((t, ti) =>
+                  Array.from({ length: t.coef }).map((__, k) => (
+                    <span
+                      key={`${ti}-${k}`}
+                      className={'tile ' + (t.varname === 'x' ? 'tile--x' : 'tile--unit')}
+                    >
+                      {filled ? (t.varname === 'x' ? 'x' : '1') : ''}
+                    </span>
+                  ))
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {built && (
+        <p className="distrib__tally">
+          That's <strong>{xTiles}</strong> x-tile{xTiles === 1 ? '' : 's'} and{' '}
+          <strong>{unitTiles}</strong> unit{unitTiles === 1 ? '' : 's'} in all.
+        </p>
+      )}
+
+      <div className="choices" role="group" aria-label="Choose the simplified expression">
+        {options.map((opt) => (
+          <button
+            key={opt.text}
+            type="button"
+            className={'choice' + (choice === opt.text ? ' choice--sel' : '')}
+            disabled={!built || locked}
+            onClick={() => {
+              setChoice(opt.text)
+              setResult(null)
+            }}
+          >
+            {opt.text}
+          </button>
+        ))}
+      </div>
+
+      {resultText && (
+        <p className={`answer-feedback answer-feedback--${resultTone}`} role="status" aria-live="polite">
+          {resultText}
+        </p>
+      )}
+
+      <div className="controls">
+        {!locked && built && choice != null && (
+          <button
+            className="btn"
+            onClick={() => {
+              if (isCorrect) setResult('correct')
+              else {
+                setResult('wrong')
+                setEverWrong(true)
+              }
+            }}
+          >
+            Submit
+          </button>
+        )}
+        {locked && (
+          <button className="btn" onClick={() => onResult(!everWrong)}>
+            Next →
+          </button>
+        )}
+      </div>
+    </main>
+  )
+}
+
 export default function DistributiveLesson({
   onBack,
   onPass,
@@ -96,6 +255,9 @@ export default function DistributiveLesson({
   const [lastResult, setLastResult] = useState(null)
   const [showIntro, setShowIntro] = useState(levelIndex === 0 && (value.groups ?? 0) === 0)
   const [showSummary, setShowSummary] = useState(false)
+  const [mkDone, setMkDone] = useState(false)
+  const makeup = useMakeup(() => generateLike(), () => setMkDone(true))
+  const missed = missedIndicesFrom(results, DISTRIBUTIVE_LEVELS.length)
 
   const built = groups >= level.multiplier
   const solved = !!levelResult.solved
@@ -144,13 +306,6 @@ export default function DistributiveLesson({
     onChange({ levelIndex: levelIndex + 1, groups: 0, results })
   }
 
-  const retryLesson = () => {
-    setChoice(null)
-    setLastResult(null)
-    setShowSummary(false)
-    onChange({ levelIndex: 0, groups: 0, results: {} })
-  }
-
   // ---- Intro screen ----
   if (showIntro) {
     return (
@@ -161,23 +316,48 @@ export default function DistributiveLesson({
           </button>
           <h1>{lessonTitle}</h1>
         </header>
-        <div className="intro">
-          <div className="intro__icon" aria-hidden="true">🟦</div>
-          <p className="intro__eyebrow">Before we start</p>
-          <h2 className="intro__title">A number in front of parentheses multiplies everything inside.</h2>
-          <p className="intro__blurb">
-            The <strong>distributive property</strong> says that{' '}
-            <strong>a(b + c) = a·b + a·c</strong> — the number outside the parentheses gets shared
-            with <em>every</em> term inside. A great way to see this is an{' '}
-            <strong>area model</strong>: <strong>3(2x + 1)</strong> means three copies of the group{' '}
-            <strong>2x + 1</strong> stacked together. Lay them out as tiles — some marked{' '}
-            <strong>x</strong> and some marked with their number — and just count: three groups of two{' '}
-            <strong>x</strong>-tiles makes <strong>6x</strong>, and three groups of one unit makes{' '}
-            <strong>3</strong>, so <strong>3(2x + 1) = 6x + 3</strong>. In these puzzles you'll tap a
-            multiplier button to stack the copies, then pick the simplified answer.
+        <DistributiveIntro onDone={() => setShowIntro(false)} />
+      </div>
+    )
+  }
+
+  // ---- Make-up screen (drilling missed levels) ----
+  if (makeup.active) {
+    return (
+      <div className="app">
+        <header className="app__header app__header--lesson">
+          <button className="back-btn" onClick={onBack} aria-label="Back to path">
+            ← Path
+          </button>
+          <h1>{lessonTitle}</h1>
+        </header>
+        <div className="level-head">
+          <MakeupDots stars={makeup.stars} total={makeup.total} />
+          <h2>Make-up · {DISTRIBUTIVE_LEVELS[makeup.sourceIndex].title}</h2>
+        </div>
+        <DistributiveMakeupPlayer key={makeup.seq} level={makeup.question} onResult={makeup.registerResult} />
+      </div>
+    )
+  }
+
+  // ---- All caught up ----
+  if (mkDone) {
+    return (
+      <div className="app">
+        <header className="app__header app__header--lesson">
+          <button className="back-btn" onClick={onBack} aria-label="Back to path">
+            ← Path
+          </button>
+          <h1>{lessonTitle}</h1>
+        </header>
+        <div className="summary">
+          <p className="summary__eyebrow">All caught up</p>
+          <div className="summary__score summary__score--pass">★</div>
+          <p className="summary__msg summary__msg--pass">
+            Nice — you made up everything you missed. Checkpoint complete!
           </p>
-          <button className="btn intro__btn" onClick={() => setShowIntro(false)}>
-            Next →
+          <button className="btn" onClick={onPass ?? onBack}>
+            Back to path →
           </button>
         </div>
       </div>
@@ -214,26 +394,28 @@ export default function DistributiveLesson({
               return (
                 <li key={lvl.id} className="summary__item">
                   <span className={`summary__mark ${ok ? 'summary__mark--ok' : 'summary__mark--bad'}`}>
-                    {ok ? '✓' : '✗'}
+                    {ok ? '✓' : ''}
                   </span>
                   <span className="summary__title">{lvl.title}</span>
                 </li>
               )
             })}
           </ul>
-          {passed ? (
+          {missed.length === 0 ? (
             <>
               <p className="summary__msg summary__msg--pass">
-                Nice work — you passed! The next checkpoint is unlocked.
+                Perfect — you nailed every question! The next checkpoint is unlocked.
               </p>
               <button className="btn" onClick={onPass ?? onBack}>Back to path →</button>
             </>
           ) : (
             <>
-              <p className="summary__msg summary__msg--fail">
-                You scored below 80%. Retry the lesson to master it.
+              <p className="summary__msg summary__msg--todo">
+                Let's lock in the {missed.length} you missed — answer 3 similar questions for each.
               </p>
-              <button className="btn" onClick={retryLesson}>Retry lesson ↻</button>
+              <button className="btn" onClick={() => makeup.start(missed)}>
+                Let's see what we missed →
+              </button>
             </>
           )}
         </div>
@@ -393,7 +575,7 @@ export default function DistributiveLesson({
           )}
           {solved && isLast && (
             <button className="btn" onClick={() => setShowSummary(true)}>
-              Finish lesson 🎉
+              Finish lesson
             </button>
           )}
         </div>

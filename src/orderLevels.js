@@ -40,4 +40,12 @@ export const ORDER_LEVELS = [
     instruction:
       'One more on your own, this time with an exponent. Use the whiteboard, then enter your answer.',
   },
+  {
+    id: 5,
+    mode: 'solve',
+    difficulty: 'medium',
+    title: 'The Final Stretch',
+    instruction:
+      'Last one. Work through it in PEMDAS order on the whiteboard, then enter your final answer.',
+  },
 ]

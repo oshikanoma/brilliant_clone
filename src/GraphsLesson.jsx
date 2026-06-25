@@ -1,7 +1,12 @@
 import { useState } from 'react'
-import { GRAPHS_LEVELS } from './graphsLevels.js'
+import { GRAPH_LEVELS } from './graphsLevels.js'
 import Graph from './components/Graph.jsx'
 import OwlSpeech from './OwlSpeech.jsx'
+import MakeupDots from './MakeupDots.jsx'
+import { useMakeup, missedIndicesFrom } from './useMakeup.js'
+
+const rint = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1))
+const pick = (arr) => arr[rint(0, arr.length - 1)]
 
 // Turn a number into a tidy fraction string for small denominators.
 function toFrac(n) {
@@ -82,15 +87,195 @@ function wrongGraphWhy(level, pins, slopeInput) {
   return "Those points aren't both on the line — start at the y-intercept, then use the slope to step to the next one."
 }
 
+// Generate a fresh line question in the same mode/style as `level`.
+function generateLike(level) {
+  if (level.mode === 'intercept') {
+    let b = rint(-4, 4)
+    if (b === 0) b = 3
+    return { mode: 'intercept', m: pick([1, -1, 2, -2]), b, title: level.title }
+  }
+  if (level.mode === 'slope') {
+    return { mode: 'slope', m: pick([1, -1, 2, -2, 3, -3]), b: rint(-3, 3), title: level.title }
+  }
+  // graph: only offer a fractional slope when the missed level itself was fractional
+  const pool = level.m % 1 !== 0 ? [0.5, -0.5, 1, -1, 2, -2] : [1, -1, 2, -2]
+  return { mode: 'graph', m: pick(pool), b: rint(-3, 3), title: level.title }
+}
+
+// One generated graphing question for the make-up flow.
+function GraphsMakeupPlayer({ level, onResult }) {
+  const [pins, setPins] = useState([])
+  const [slopeInput, setSlopeInput] = useState('')
+  const [result, setResult] = useState(null)
+  const [everWrong, setEverWrong] = useState(false)
+  const locked = result === 'correct'
+
+  const maxPins = level.mode === 'graph' ? 2 : level.mode === 'intercept' ? 1 : 0
+
+  const placePin = (pt) => {
+    if (locked || maxPins === 0) return
+    setResult(null)
+    setPins((prev) => {
+      if (prev.some((p) => p.x === pt.x && p.y === pt.y)) {
+        return prev.filter((p) => !(p.x === pt.x && p.y === pt.y))
+      }
+      if (prev.length >= maxPins) return [pt]
+      return [...prev, pt]
+    })
+  }
+
+  let isCorrect = false
+  if (level.mode === 'intercept') {
+    isCorrect = pins.length === 1 && pins[0].x === 0 && pins[0].y === level.b
+  } else if (level.mode === 'slope') {
+    const v = parseSlope(slopeInput)
+    isCorrect = v != null && Math.abs(v - level.m) < 1e-9
+  } else {
+    isCorrect =
+      pins.length === 2 &&
+      pins[0].x !== pins[1].x &&
+      onLine(pins[0], level.m, level.b) &&
+      onLine(pins[1], level.m, level.b)
+  }
+
+  const canSubmit =
+    !locked &&
+    (level.mode === 'slope'
+      ? parseSlope(slopeInput) != null
+      : level.mode === 'intercept'
+        ? pins.length === 1
+        : pins.length === 2)
+
+  const submit = () => {
+    if (!canSubmit) return
+    if (isCorrect) setResult('correct')
+    else {
+      setResult('wrong')
+      setEverWrong(true)
+    }
+  }
+
+  const instruction =
+    level.mode === 'intercept'
+      ? `Here's the line ${equationText(level.m, level.b)}. Where is its y-intercept?`
+      : level.mode === 'slope'
+        ? `What is the slope of ${equationText(level.m, level.b)}?`
+        : `Graph the line ${equationText(level.m, level.b)} by dropping two pins it passes through.`
+
+  const hint =
+    level.mode === 'intercept'
+      ? 'The y-intercept is where the line crosses the y-axis (x = 0). Tap the grid to drop a pin there.'
+      : level.mode === 'slope'
+        ? 'Slope is rise over run: count how far up the line goes for each step right, then type rise ÷ run.'
+        : `Start at the y-intercept (0, ${level.b}), then use the slope to step to another point.`
+
+  let resultTone = null
+  let resultText = ''
+  if (result === 'correct') {
+    resultTone = 'ok'
+    resultText =
+      level.mode === 'slope'
+        ? `✓ Correct! The slope is ${toFrac(level.m)}.`
+        : level.mode === 'intercept'
+          ? `✓ Correct! The y-intercept is (0, ${level.b}).`
+          : `✓ Nailed it — that's the line ${equationText(level.m, level.b)}.`
+  } else if (result === 'wrong') {
+    resultTone = 'bad'
+    resultText = wrongGraphWhy(level, pins, slopeInput)
+  }
+
+  const showLine = level.mode !== 'graph' || result === 'correct'
+  const riseRun = level.mode === 'slope' ? { run: 1, rise: level.m, fromX: 0, fromY: level.b } : null
+
+  return (
+    <main className="order">
+      <OwlSpeech text={<strong>{instruction}</strong>} tone="neutral" />
+
+      <div className="graph-wrap">
+        <Graph
+          m={level.m}
+          b={level.b}
+          showLine={showLine}
+          lineTone={result === 'correct' ? 'ok' : 'target'}
+          pins={pins}
+          onPlace={level.mode === 'slope' ? undefined : placePin}
+          riseRun={riseRun}
+          userLine={level.mode === 'graph'}
+        />
+      </div>
+
+      {level.mode === 'slope' && (
+        <div className="answer">
+          <label className="answer__label" htmlFor="mk-slope-input">
+            Slope
+          </label>
+          <input
+            id="mk-slope-input"
+            className="answer__input"
+            type="text"
+            inputMode="text"
+            value={slopeInput}
+            disabled={locked}
+            placeholder="?"
+            onChange={(e) => {
+              setSlopeInput(e.target.value)
+              setResult(null)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') submit()
+            }}
+          />
+        </div>
+      )}
+
+      {resultText && (
+        <p className={`answer-feedback answer-feedback--${resultTone}`} role="status" aria-live="polite">
+          {resultText}
+        </p>
+      )}
+
+      <div className="controls">
+        {!locked && (pins.length > 0 || slopeInput !== '') && (
+          <button
+            className="btn btn--ghost"
+            onClick={() => {
+              setPins([])
+              setSlopeInput('')
+              setResult(null)
+            }}
+          >
+            Reset
+          </button>
+        )}
+        {canSubmit && (
+          <button className="btn" onClick={submit}>
+            Submit
+          </button>
+        )}
+        {locked && (
+          <button className="btn" onClick={() => onResult(!everWrong)}>
+            Next →
+          </button>
+        )}
+      </div>
+
+      {!locked && <p className="lesson-hint">{hint}</p>}
+    </main>
+  )
+}
+
 export default function GraphsLesson({
   onBack,
   onPass,
   lessonTitle = 'Graphs and Linear Relationships',
+  levels = GRAPH_LEVELS,
+  intro = null,
+  IntroComponent = null,
   value,
   onChange,
 }) {
   const levelIndex = value.levelIndex
-  const level = GRAPHS_LEVELS[levelIndex]
+  const level = levels[levelIndex]
 
   const results = value.results ?? {}
   const levelResult = results[levelIndex] ?? { solved: false, wrong: false }
@@ -98,11 +283,16 @@ export default function GraphsLesson({
   const [pins, setPins] = useState([])
   const [slopeInput, setSlopeInput] = useState('')
   const [lastResult, setLastResult] = useState(null)
-  const [showIntro, setShowIntro] = useState(levelIndex === 0 && !levelResult.solved)
+  const [showIntro, setShowIntro] = useState(
+    (!!intro || !!IntroComponent) && levelIndex === 0 && !levelResult.solved
+  )
   const [showSummary, setShowSummary] = useState(false)
+  const [mkDone, setMkDone] = useState(false)
+  const makeup = useMakeup((idx) => generateLike(levels[idx]), () => setMkDone(true))
+  const missed = missedIndicesFrom(results, levels.length)
 
   const solved = !!levelResult.solved
-  const isLast = levelIndex === GRAPHS_LEVELS.length - 1
+  const isLast = levelIndex === levels.length - 1
   const maxPins = level.mode === 'graph' ? 2 : level.mode === 'intercept' ? 1 : 0
 
   const resetLocal = () => {
@@ -158,12 +348,6 @@ export default function GraphsLesson({
     onChange({ levelIndex: levelIndex + 1, results })
   }
 
-  const retryLesson = () => {
-    resetLocal()
-    setShowSummary(false)
-    onChange({ levelIndex: 0, results: {} })
-  }
-
   // ---- Intro screen ----
   if (showIntro) {
     return (
@@ -174,21 +358,60 @@ export default function GraphsLesson({
           </button>
           <h1>{lessonTitle}</h1>
         </header>
-        <div className="intro">
-          <div className="intro__icon" aria-hidden="true">📈</div>
-          <p className="intro__eyebrow">Before we start</p>
-          <h2 className="intro__title">Every straight line is captured by y = mx + b.</h2>
-          <p className="intro__blurb">
-            A linear equation in the form <strong>y = mx + b</strong> hides two key facts about
-            its graph. The <strong>b</strong> is the <strong>y-intercept</strong> — where the line
-            crosses the y-axis (the point where <strong>x = 0</strong>). The <strong>m</strong> is
-            the <strong>slope</strong> — how steep the line is, measured as{' '}
-            <strong>rise over run</strong> (how far it goes up for every step to the right). In
-            these last puzzles you'll find the intercept, measure a slope, and then graph lines of
-            your own — one piece at a time.
+        {IntroComponent ? (
+          <IntroComponent onDone={() => setShowIntro(false)} />
+        ) : (
+          <div className="intro">
+            <div className="intro__icon" aria-hidden="true">{intro?.icon ?? '📈'}</div>
+            <p className="intro__eyebrow">Before we start</p>
+            <h2 className="intro__title">{intro?.title}</h2>
+            <p className="intro__blurb">{intro?.blurb}</p>
+            <button className="btn intro__btn" onClick={() => setShowIntro(false)}>
+              Next →
+            </button>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // ---- Make-up screen ----
+  if (makeup.active) {
+    return (
+      <div className="app">
+        <header className="app__header app__header--lesson">
+          <button className="back-btn" onClick={onBack} aria-label="Back to path">
+            ← Path
+          </button>
+          <h1>{lessonTitle}</h1>
+        </header>
+        <div className="level-head">
+          <MakeupDots stars={makeup.stars} total={makeup.total} />
+          <h2>Make-up · {levels[makeup.sourceIndex].title}</h2>
+        </div>
+        <GraphsMakeupPlayer key={makeup.seq} level={makeup.question} onResult={makeup.registerResult} />
+      </div>
+    )
+  }
+
+  // ---- All caught up ----
+  if (mkDone) {
+    return (
+      <div className="app">
+        <header className="app__header app__header--lesson">
+          <button className="back-btn" onClick={onBack} aria-label="Back to path">
+            ← Path
+          </button>
+          <h1>{lessonTitle}</h1>
+        </header>
+        <div className="summary">
+          <p className="summary__eyebrow">All caught up</p>
+          <div className="summary__score summary__score--pass">★</div>
+          <p className="summary__msg summary__msg--pass">
+            Nice — you made up everything you missed. Checkpoint complete!
           </p>
-          <button className="btn intro__btn" onClick={() => setShowIntro(false)}>
-            Next →
+          <button className="btn" onClick={onPass ?? onBack}>
+            Back to path →
           </button>
         </div>
       </div>
@@ -197,8 +420,8 @@ export default function GraphsLesson({
 
   // ---- Summary screen ----
   if (showSummary) {
-    const total = GRAPHS_LEVELS.length
-    const correctCount = GRAPHS_LEVELS.reduce(
+    const total = levels.length
+    const correctCount = levels.reduce(
       (n, _, i) => n + (results[i]?.solved && !results[i]?.wrong ? 1 : 0),
       0
     )
@@ -219,32 +442,34 @@ export default function GraphsLesson({
           </div>
           <p className="summary__count">{correctCount} of {total} correct on the first try</p>
           <ul className="summary__list">
-            {GRAPHS_LEVELS.map((lvl, i) => {
+            {levels.map((lvl, i) => {
               const r = results[i] ?? {}
               const ok = r.solved && !r.wrong
               return (
                 <li key={lvl.id} className="summary__item">
                   <span className={`summary__mark ${ok ? 'summary__mark--ok' : 'summary__mark--bad'}`}>
-                    {ok ? '✓' : '✗'}
+                    {ok ? '✓' : ''}
                   </span>
                   <span className="summary__title">{lvl.title}</span>
                 </li>
               )
             })}
           </ul>
-          {passed ? (
+          {missed.length === 0 ? (
             <>
               <p className="summary__msg summary__msg--pass">
-                Incredible — you finished the whole Algebra module!
+                Nice work — you've got {lessonTitle} down. The next checkpoint is unlocked!
               </p>
               <button className="btn" onClick={onPass ?? onBack}>Back to path →</button>
             </>
           ) : (
             <>
-              <p className="summary__msg summary__msg--fail">
-                You scored below 80%. Retry the lesson to master it.
+              <p className="summary__msg summary__msg--todo">
+                Let's lock in the {missed.length} you missed — answer 3 similar questions for each.
               </p>
-              <button className="btn" onClick={retryLesson}>Retry lesson ↻</button>
+              <button className="btn" onClick={() => makeup.start(missed)}>
+                Let's see what we missed →
+              </button>
             </>
           )}
         </div>
@@ -319,11 +544,11 @@ export default function GraphsLesson({
           role="progressbar"
           aria-valuenow={levelIndex + 1}
           aria-valuemin={1}
-          aria-valuemax={GRAPHS_LEVELS.length}
+          aria-valuemax={levels.length}
         >
           <div
             className="progress__fill"
-            style={{ width: `${((levelIndex + 1) / GRAPHS_LEVELS.length) * 100}%` }}
+            style={{ width: `${((levelIndex + 1) / levels.length) * 100}%` }}
           />
         </div>
         <h2>{level.title}</h2>
@@ -393,7 +618,7 @@ export default function GraphsLesson({
           )}
           {solved && isLast && (
             <button className="btn" onClick={() => setShowSummary(true)}>
-              Finish lesson 🎉
+              Finish lesson
             </button>
           )}
         </div>

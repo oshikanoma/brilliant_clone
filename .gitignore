@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Local Node toolchain (downloaded per-machine, not source)
+.tooling/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

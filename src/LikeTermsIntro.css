@@ -1,0 +1,59 @@
+/* Combining Like Terms animated intro. Reuses the global .ointro* styles for
+   the board, equation tokens and bottom text; these rules add the hopping owl
+   that travels between like-terms in the equation row. */
+
+.liintro__board {
+  position: relative;
+  padding-top: 88px;
+}
+
+.liintro__eq {
+  position: static;
+}
+
+/* Term superscripts (x²). */
+.liintro__eq sup {
+  font-size: 0.62em;
+  vertical-align: super;
+  margin-left: 0.02em;
+  font-weight: 800;
+}
+
+/* Owl wrapper: `left` is the measured center of its current term, and the
+   translateX(-50%) keeps the owl centered over it. The transition makes Bruh
+   visibly glide sideways when the target changes. */
+.liintro__owl {
+  position: absolute;
+  top: 26px;
+  width: 54px;
+  height: 52px;
+  transform: translateX(-50%);
+  transition: left 0.5s cubic-bezier(0.34, 1.4, 0.64, 1);
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Vertical hop arc, retriggered (via React key) on every move. */
+.liintro__owlhop {
+  display: block;
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 54px;
+  height: 52px;
+  transform: translateX(-50%);
+  animation: liintro-hop 0.62s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.liintro__owlinner {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+}
+
+@keyframes liintro-hop {
+  0% { transform: translate(-50%, 0) rotate(0deg); }
+  40% { transform: translate(-50%, -30px) rotate(-6deg); }
+  70% { transform: translate(-50%, -4px) rotate(3deg); }
+  100% { transform: translate(-50%, 0) rotate(0deg); }
+}

@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { ORDER_LEVELS } from './orderLevels.js'
 import Whiteboard from './Whiteboard.jsx'
 import OwlSpeech from './OwlSpeech.jsx'
+import OrderIntro from './OrderIntro.jsx'
+import MakeupDots from './MakeupDots.jsx'
+import { useMakeup, missedIndicesFrom } from './useMakeup.js'
 
 const genId = () => Math.random().toString(36).slice(2, 9)
 
@@ -176,6 +179,201 @@ function generateTokens(difficulty) {
   return tokens
 }
 
+// Generate a fresh expression in the same mode/difficulty as `level`.
+function generateLike(level) {
+  const difficulty = level.difficulty ?? (level.expr?.includes('^') ? 'medium' : 'easy')
+  return { mode: level.mode, difficulty, tokens: generateTokens(difficulty) }
+}
+
+// One generated order-of-operations question for the make-up flow.
+function OrderMakeupPlayer({ level, onResult }) {
+  const [tokens, setTokens] = useState(level.tokens)
+  const [selected, setSelected] = useState([])
+  const [answer, setAnswer] = useState('')
+  const [result, setResult] = useState(null)
+  const [stepResult, setStepResult] = useState(null)
+  const [everWrong, setEverWrong] = useState(false)
+
+  // ---- Solve mode (whiteboard + typed answer) ----
+  if (level.mode === 'solve') {
+    const solveAnswer = reduceChecked(level.tokens).value
+    const isCorrect = Number(answer) === solveAnswer
+    const locked = result === 'correct'
+    const canSubmit = !locked && answer.trim() !== ''
+    const submit = () => {
+      if (!canSubmit) return
+      if (isCorrect) setResult('correct')
+      else {
+        setResult('wrong')
+        setEverWrong(true)
+      }
+    }
+    let resultTone = null
+    let resultText = ''
+    if (result === 'correct') {
+      resultTone = 'ok'
+      resultText = `✓ Correct! The answer is ${solveAnswer}.`
+    } else if (result === 'wrong') {
+      resultTone = 'bad'
+      const fs = nextStep(level.tokens)
+      resultText = fs
+        ? `Not quite. Follow PEMDAS — the first thing to simplify is ${describeStep(level.tokens, fs)} (${CAT_NAME[fs.category]}). Work in that order and try again.`
+        : 'Not quite — recheck your arithmetic and try again.'
+    }
+    return (
+      <main className="order">
+        <OwlSpeech text={<strong>Work it out in PEMDAS order, then enter your answer.</strong>} tone="neutral" />
+        <div className="eq eq--readonly">
+          {level.tokens.map((t) => {
+            const cls =
+              'token token--static' +
+              (t.kind === 'op' ? ' token--op' : '') +
+              (t.kind === 'lp' || t.kind === 'rp' ? ' token--paren' : '')
+            const text = t.kind === 'num' ? t.value : t.kind === 'op' ? OP_DISPLAY[t.raw] : t.raw
+            return (
+              <span key={t.id} className={cls}>
+                {text}
+              </span>
+            )
+          })}
+        </div>
+        <p className="solve-hint">Now you try! Try writing on the whiteboard below.</p>
+        <Whiteboard />
+        <div className="answer">
+          <label className="answer__label" htmlFor="mk-order-answer">
+            Your answer
+          </label>
+          <input
+            id="mk-order-answer"
+            className="answer__input"
+            type="number"
+            inputMode="numeric"
+            value={answer}
+            disabled={locked}
+            placeholder="?"
+            onChange={(e) => {
+              setAnswer(e.target.value)
+              setResult(null)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') submit()
+            }}
+          />
+        </div>
+        {resultText && (
+          <p className={`answer-feedback answer-feedback--${resultTone}`} role="status" aria-live="polite">
+            {resultText}
+          </p>
+        )}
+        <div className="controls">
+          {canSubmit && (
+            <button className="btn" onClick={submit}>
+              Submit
+            </button>
+          )}
+          {locked && (
+            <button className="btn" onClick={() => onResult(!everWrong)}>
+              Next →
+            </button>
+          )}
+        </div>
+      </main>
+    )
+  }
+
+  // ---- Identify mode (tap the next step until fully simplified) ----
+  const step = nextStep(tokens)
+  const solved = tokens.length <= 1
+  const activeIdx = step ? PEMDAS_ORDER.indexOf(step.category) : PEMDAS_ORDER.length
+
+  const toggle = (id) => {
+    if (solved) return
+    setStepResult(null)
+    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+  }
+
+  const submitStep = () => {
+    if (!step || selected.length === 0) return
+    const sel = new Set(selected)
+    const target = new Set(step.targetIds)
+    const withParens = step.parenIds && new Set([...step.targetIds, ...step.parenIds])
+    const correct = sameSet(sel, target) || (withParens && sameSet(sel, withParens))
+    if (correct) {
+      setTokens(evaluate(tokens, step.opIdx))
+      setSelected([])
+      setStepResult('correct')
+    } else {
+      setStepResult('wrong')
+      setEverWrong(true)
+    }
+  }
+
+  let resultTone = null
+  let resultText = ''
+  if (solved) {
+    resultTone = 'ok'
+    resultText = `✓ Fully simplified! The answer is ${tokens[0].value}.`
+  } else if (stepResult === 'wrong' && step) {
+    resultTone = 'bad'
+    resultText = `Not yet — by PEMDAS you should handle ${CAT_NAME[step.category]} next, which means evaluating ${describeStep(tokens, step)}. Tap exactly that part${step.parenIds ? ' (you can include its parentheses too)' : ''}.`
+  } else if (stepResult === 'correct') {
+    resultTone = 'ok'
+    resultText = '✓ Nice — that part is simplified.'
+  }
+
+  return (
+    <main className="order">
+      <OwlSpeech text={<strong>Follow PEMDAS: tap the part to evaluate next, then Submit.</strong>} tone="neutral" />
+      <div className="order__main">
+        <div className="eq">
+          {tokens.map((t) => {
+            const isSel = selected.includes(t.id)
+            const cls =
+              'token' +
+              (t.kind === 'op' ? ' token--op' : '') +
+              (t.kind === 'lp' || t.kind === 'rp' ? ' token--paren' : '') +
+              (isSel ? ' token--sel' : '')
+            const text = t.kind === 'num' ? t.value : t.kind === 'op' ? OP_DISPLAY[t.raw] : t.raw
+            return (
+              <button key={t.id} className={cls} onClick={() => toggle(t.id)} disabled={solved}>
+                {text}
+              </button>
+            )
+          })}
+        </div>
+        <ol className="pemdas" aria-label="PEMDAS order">
+          {PEMDAS_ROWS.map((row, i) => {
+            const state = solved || i < activeIdx ? 'done' : i === activeIdx ? 'active' : 'pending'
+            return (
+              <li key={row.key} className={`pemdas__row pemdas__row--${state}`}>
+                <span className="pemdas__key">{state === 'done' ? '✓' : row.label}</span>
+                <span className="pemdas__sub">{row.sub}</span>
+              </li>
+            )
+          })}
+        </ol>
+      </div>
+      {resultText && (
+        <p className={`answer-feedback answer-feedback--${resultTone}`} role="status" aria-live="polite">
+          {resultText}
+        </p>
+      )}
+      <div className="controls">
+        {!solved && selected.length > 0 && (
+          <button className="btn" onClick={submitStep}>
+            Submit
+          </button>
+        )}
+        {solved && (
+          <button className="btn" onClick={() => onResult(!everWrong)}>
+            Next →
+          </button>
+        )}
+      </div>
+    </main>
+  )
+}
+
 export default function OrderLesson({ onBack, onPass, lessonTitle = 'Order of Operations', value, onChange }) {
   const levelIndex = value.levelIndex
   const level = ORDER_LEVELS[levelIndex]
@@ -195,6 +393,9 @@ export default function OrderLesson({ onBack, onPass, lessonTitle = 'Order of Op
   const [lastResult, setLastResult] = useState(null)
   const [showIntro, setShowIntro] = useState(levelIndex === 0 && value.tokens == null)
   const [showSummary, setShowSummary] = useState(false)
+  const [mkDone, setMkDone] = useState(false)
+  const makeup = useMakeup((idx) => generateLike(ORDER_LEVELS[idx]), () => setMkDone(true))
+  const missed = missedIndicesFrom(results, ORDER_LEVELS.length)
 
   // Persist a freshly generated solve-mode equation so it survives a reload and
   // doesn't regenerate on every render.
@@ -206,7 +407,11 @@ export default function OrderLesson({ onBack, onPass, lessonTitle = 'Order of Op
   }, [level.mode, value.tokens, levelIndex])
 
   const step = level.mode === 'identify' ? nextStep(tokens) : null
-  const solved = level.mode === 'solve' ? !!levelResult.solved : tokens.length <= 1
+  // For identify levels the puzzle is done the moment there's no operation left
+  // to evaluate (i.e. it's a single number, or nothing further can collapse).
+  // Keying off `!step` rather than only the token count guarantees the
+  // Next/Finish button always appears once simplifying is complete.
+  const solved = level.mode === 'solve' ? !!levelResult.solved : !step
   const activeIdx = step ? PEMDAS_ORDER.indexOf(step.category) : PEMDAS_ORDER.length
   const solveAnswer = useMemo(
     () => (level.mode === 'solve' ? reduceChecked(tokens).value : null),
@@ -245,7 +450,7 @@ export default function OrderLesson({ onBack, onPass, lessonTitle = 'Order of Op
 
     if (correct) {
       const next = evaluate(tokens, step.opIdx)
-      const nowSolved = next.length <= 1
+      const nowSolved = !nextStep(next)
       setLastResult('correct')
       setSelected([])
       onChange({
@@ -279,14 +484,6 @@ export default function OrderLesson({ onBack, onPass, lessonTitle = 'Order of Op
     onChange({ levelIndex: levelIndex + 1, tokens: null, results })
   }
 
-  const retryLesson = () => {
-    setSelected([])
-    setAnswer('')
-    setLastResult(null)
-    setShowSummary(false)
-    onChange({ levelIndex: 0, tokens: null, results: {} })
-  }
-
   // ---- Intro screen ----
   if (showIntro) {
     return (
@@ -297,22 +494,48 @@ export default function OrderLesson({ onBack, onPass, lessonTitle = 'Order of Op
           </button>
           <h1>{lessonTitle}</h1>
         </header>
-        <div className="intro">
-          <div className="intro__icon" aria-hidden="true">🔢</div>
-          <p className="intro__eyebrow">Before we start</p>
-          <h2 className="intro__title">There’s a standard order for solving expressions.</h2>
-          <p className="intro__blurb">
-            When an expression mixes several operations, you can’t just work left to right —
-            you’d get different answers depending on where you started. To keep everyone
-            agreeing on one result, math follows a fixed order called <strong>PEMDAS</strong>:
-            Parentheses first, then Exponents, then Multiplication and Division (left to
-            right), and finally Addition and Subtraction (left to right). Following this order
-            every time is what makes an expression simplify to one correct, predictable
-            answer. In the next puzzles you’ll pick out which part to solve next and watch the
-            expression shrink step by step.
+        <OrderIntro onDone={() => setShowIntro(false)} />
+      </div>
+    )
+  }
+
+  // ---- Make-up screen ----
+  if (makeup.active) {
+    return (
+      <div className="app">
+        <header className="app__header app__header--lesson">
+          <button className="back-btn" onClick={onBack} aria-label="Back to path">
+            ← Path
+          </button>
+          <h1>{lessonTitle}</h1>
+        </header>
+        <div className="level-head">
+          <MakeupDots stars={makeup.stars} total={makeup.total} />
+          <h2>Make-up · {ORDER_LEVELS[makeup.sourceIndex].title}</h2>
+        </div>
+        <OrderMakeupPlayer key={makeup.seq} level={makeup.question} onResult={makeup.registerResult} />
+      </div>
+    )
+  }
+
+  // ---- All caught up ----
+  if (mkDone) {
+    return (
+      <div className="app">
+        <header className="app__header app__header--lesson">
+          <button className="back-btn" onClick={onBack} aria-label="Back to path">
+            ← Path
+          </button>
+          <h1>{lessonTitle}</h1>
+        </header>
+        <div className="summary">
+          <p className="summary__eyebrow">All caught up</p>
+          <div className="summary__score summary__score--pass">★</div>
+          <p className="summary__msg summary__msg--pass">
+            Nice — you made up everything you missed. Checkpoint complete!
           </p>
-          <button className="btn intro__btn" onClick={() => setShowIntro(false)}>
-            Next →
+          <button className="btn" onClick={onPass ?? onBack}>
+            Back to path →
           </button>
         </div>
       </div>
@@ -349,26 +572,28 @@ export default function OrderLesson({ onBack, onPass, lessonTitle = 'Order of Op
               return (
                 <li key={lvl.id} className="summary__item">
                   <span className={`summary__mark ${ok ? 'summary__mark--ok' : 'summary__mark--bad'}`}>
-                    {ok ? '✓' : '✗'}
+                    {ok ? '✓' : ''}
                   </span>
                   <span className="summary__title">{lvl.title}</span>
                 </li>
               )
             })}
           </ul>
-          {passed ? (
+          {missed.length === 0 ? (
             <>
               <p className="summary__msg summary__msg--pass">
-                Nice work — you passed! The next checkpoint is unlocked.
+                Perfect — you nailed every question! The next checkpoint is unlocked.
               </p>
               <button className="btn" onClick={onPass ?? onBack}>Back to path →</button>
             </>
           ) : (
             <>
-              <p className="summary__msg summary__msg--fail">
-                You scored below 80%. Retry the lesson to master it.
+              <p className="summary__msg summary__msg--todo">
+                Let's lock in the {missed.length} you missed — answer 3 similar questions for each.
               </p>
-              <button className="btn" onClick={retryLesson}>Retry lesson ↻</button>
+              <button className="btn" onClick={() => makeup.start(missed)}>
+                Let's see what we missed →
+              </button>
             </>
           )}
         </div>
@@ -390,6 +615,11 @@ export default function OrderLesson({ onBack, onPass, lessonTitle = 'Order of Op
       level.mode === 'solve'
         ? `✓ Correct! The answer is ${solveAnswer}.`
         : `✓ Fully simplified! The answer is ${tokens[0].value}.`
+  } else if (lastResult === 'correct') {
+    // A single step collapsed but the equation isn't done yet — make it obvious
+    // the student should keep going rather than think they're stuck.
+    resultTone = 'ok'
+    resultText = '✓ Nice — that part is simplified. Now tap the next part to evaluate, then Submit.'
   } else if (lastResult === 'wrong') {
     resultTone = 'bad'
     if (level.mode === 'solve') {
@@ -539,7 +769,7 @@ export default function OrderLesson({ onBack, onPass, lessonTitle = 'Order of Op
           )}
           {solved && isLast && (
             <button className="btn" onClick={() => setShowSummary(true)}>
-              Finish lesson 🎉
+              Finish lesson
             </button>
           )}
         </div>

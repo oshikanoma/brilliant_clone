@@ -1,0 +1,116 @@
+/* Animated concept intro for the Difference of Squares. Builds on the shared
+   `.ointro` / `.token` styles in index.css; only the owl-jumps-onto-tokens
+   choreography and the "pattern" chip are defined here. */
+
+.diffsq__board {
+  flex-direction: column;
+  gap: 1.25rem;
+  min-height: 150px;
+  padding: 1.5rem 1rem;
+}
+
+/* "a² − b² = (a + b)(a − b)" chip — slides in when the pattern is revealed. */
+.diffsq__rule {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  border: 2px solid var(--accent);
+  color: var(--text);
+  font-size: 1.1rem;
+  font-weight: 700;
+  opacity: 0;
+  transform: translateY(-8px) scale(0.92);
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.diffsq__rule--on {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.diffsq__rule-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-dark);
+}
+
+.diffsq__rule-eq strong {
+  color: var(--accent-dark);
+}
+
+/* The stage holds the expression row plus the absolutely-positioned owl that
+   hops above it. Extra top padding leaves room for the jump arc. */
+.diffsq__stage {
+  position: relative;
+  width: 100%;
+  padding-top: 56px;
+  display: flex;
+  justify-content: center;
+}
+
+.diffsq__eq {
+  position: relative;
+  gap: 0.35rem;
+  transition: gap 0.3s ease;
+}
+
+/* A token mid-transformation gets a gentle settle once it pops. */
+.diffsq__eq .token--static {
+  transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+/* Owl wrapper: pinned to the row's left edge, slid horizontally to the target
+   token center. The transition on transform is what makes the move a hop. */
+.diffsq__owl {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% - 50px);
+  width: 0;
+  height: 0;
+  z-index: 4;
+  opacity: 0;
+  transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+}
+
+.diffsq__owl--ready {
+  opacity: 1;
+}
+
+/* Vertical jump arc, replayed each hop via a changing React key. */
+.diffsq__owlhop {
+  position: absolute;
+  left: -23px;
+  bottom: 0;
+  width: 46px;
+  height: 44px;
+  animation: diffsq-jump 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes diffsq-jump {
+  0% { transform: translateY(0); }
+  35% { transform: translateY(-30px); }
+  65% { transform: translateY(4px); }
+  100% { transform: translateY(0); }
+}
+
+/* Keep Bruh at native 66×64 proportions, scaled down and bottom-anchored so the
+   belly doesn't ride up over the eyes. */
+.diffsq__owlbody {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 66px;
+  height: 64px;
+  transform: translateX(-50%) scale(0.7);
+  transform-origin: bottom center;
+}
+
+.diffsq__text {
+  min-height: 3.5em;
+}

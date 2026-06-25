@@ -1,8 +1,13 @@
 import { Fragment, useMemo, useState } from 'react'
 import { EVALUATE_LEVELS } from './evaluateLevels.js'
+import EvaluateIntro from './EvaluateIntro.jsx'
 import OwlSpeech from './OwlSpeech.jsx'
+import MakeupDots from './MakeupDots.jsx'
+import { useMakeup, missedIndicesFrom } from './useMakeup.js'
 
 const OP_DISPLAY = { '+': '+', '-': '−' }
+
+const rint = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1))
 
 function shuffle(arr) {
   const a = [...arr]
@@ -80,6 +85,193 @@ function makeOptions(level) {
   return { correct, options }
 }
 
+// Generate a fresh evaluation problem with the same shape/mode as `level`:
+// same variables and term layout, new random coefficients/values/ops, kept to a
+// positive integer result.
+function generateLike(level) {
+  const usedVars = [...new Set(level.terms.filter((t) => t.varname !== '').map((t) => t.varname))]
+  const values = {}
+  usedVars.forEach((v) => {
+    values[v] = rint(2, 7)
+  })
+  const terms = level.terms.map((t) => ({
+    coef: t.varname === '' ? rint(1, 6) : rint(2, 4),
+    varname: t.varname,
+  }))
+  const lvl = {
+    mode: level.mode,
+    values,
+    terms,
+    ops: level.ops.map(() => (Math.random() < 0.5 ? '+' : '-')),
+    title: level.title,
+    instruction: '',
+  }
+  for (let i = 0; i < 20 && correctAnswer(lvl) <= 0; i++) {
+    lvl.ops = lvl.ops.map(() => (Math.random() < 0.5 ? '+' : '-'))
+  }
+  if (correctAnswer(lvl) <= 0) lvl.ops = lvl.ops.map(() => '+')
+  lvl.instruction =
+    level.mode === 'choice'
+      ? 'Substitute each variable, then choose what the expression equals.'
+      : 'Substitute each variable, work left to right, then type the value.'
+  return lvl
+}
+
+// One generated evaluation question for the make-up flow.
+function EvaluateMakeupPlayer({ level, onResult }) {
+  const { correct, options } = useMemo(() => makeOptions(level), [level])
+  const [subbed, setSubbed] = useState(() => new Set())
+  const [choice, setChoice] = useState(null)
+  const [answer, setAnswer] = useState('')
+  const [result, setResult] = useState(null)
+  const [everWrong, setEverWrong] = useState(false)
+  const locked = result === 'correct'
+
+  const varIndices = level.terms.map((t, i) => (t.varname === '' ? -1 : i)).filter((i) => i >= 0)
+  const fullySubbed = varIndices.every((i) => subbed.has(i))
+  const isCorrect = level.mode === 'choice' ? choice === correct : Number(answer) === correct
+  const canSubmit =
+    !locked && fullySubbed && (level.mode === 'choice' ? choice != null : answer.trim() !== '')
+
+  const submit = () => {
+    if (!canSubmit) return
+    if (isCorrect) setResult('correct')
+    else {
+      setResult('wrong')
+      setEverWrong(true)
+    }
+  }
+
+  let resultTone = null
+  let resultText = ''
+  if (result === 'correct') {
+    resultTone = 'ok'
+    resultText = `✓ Correct! The expression equals ${correct}.`
+  } else if (result === 'wrong') {
+    resultTone = 'bad'
+    if (level.mode === 'choice') {
+      const chosen = options.find((o) => o.value === choice)
+      resultText = chosen?.why ?? wrongWhy(level, choice)
+    } else {
+      resultText = wrongWhy(level, Number(answer))
+    }
+  }
+
+  return (
+    <main className="order">
+      <OwlSpeech text={<strong>{level.instruction}</strong>} tone="neutral" />
+
+      <div className="given" aria-label="Given values">
+        {varIndices.length > 0 && <span className="given__label">Given</span>}
+        {Object.entries(level.values).map(([name, val]) => (
+          <span key={name} className="given__item">
+            {name} = <strong>{val}</strong>
+          </span>
+        ))}
+      </div>
+
+      <div className="evalexpr" aria-label="Expression to evaluate">
+        {level.terms.map((t, i) => {
+          const done = subbed.has(i)
+          return (
+            <Fragment key={i}>
+              {i > 0 && <span className="eval-op">{OP_DISPLAY[level.ops[i - 1]]}</span>}
+              <span className="eval-term">
+                {t.varname === '' ? (
+                  <span className="eval-const">{t.coef}</span>
+                ) : (
+                  <>
+                    {t.coef !== 1 && <span className="eval-coef">{t.coef}</span>}
+                    <button
+                      type="button"
+                      className={'var-chip' + (done ? ' var-chip--done' : '')}
+                      onClick={() => !locked && setSubbed((prev) => new Set(prev).add(i))}
+                      disabled={done || locked}
+                      aria-label={done ? `${t.varname} substituted` : `Substitute ${t.varname}`}
+                    >
+                      {done ? `(${level.values[t.varname]})` : t.varname}
+                    </button>
+                  </>
+                )}
+              </span>
+            </Fragment>
+          )
+        })}
+      </div>
+
+      {level.mode === 'choice' ? (
+        <div className="choices" role="group" aria-label="Choose the value">
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              className={'choice' + (choice === opt.value ? ' choice--sel' : '')}
+              disabled={!fullySubbed || locked}
+              onClick={() => {
+                setChoice(opt.value)
+                setResult(null)
+              }}
+            >
+              {opt.value}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="answer">
+          <label className="answer__label" htmlFor="mk-eval-answer">
+            Your answer
+          </label>
+          <input
+            id="mk-eval-answer"
+            className="answer__input"
+            type="number"
+            inputMode="numeric"
+            value={answer}
+            disabled={!fullySubbed || locked}
+            placeholder="?"
+            onChange={(e) => {
+              setAnswer(e.target.value)
+              setResult(null)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') submit()
+            }}
+          />
+        </div>
+      )}
+
+      {resultText && (
+        <p className={`answer-feedback answer-feedback--${resultTone}`} role="status" aria-live="polite">
+          {resultText}
+        </p>
+      )}
+
+      <div className="controls">
+        {canSubmit && (
+          <button className="btn" onClick={submit}>
+            Submit
+          </button>
+        )}
+        {locked && (
+          <button className="btn" onClick={() => onResult(!everWrong)}>
+            Next →
+          </button>
+        )}
+      </div>
+
+      {!locked && (
+        <p className="lesson-hint">
+          {!fullySubbed
+            ? 'Tap each variable to drop in the value it stands for.'
+            : level.mode === 'choice'
+              ? 'Now evaluate and choose the answer below.'
+              : 'Now evaluate and type the value below.'}
+        </p>
+      )}
+    </main>
+  )
+}
+
 export default function EvaluateLesson({
   onBack,
   onPass,
@@ -102,6 +294,9 @@ export default function EvaluateLesson({
   const [lastResult, setLastResult] = useState(null)
   const [showIntro, setShowIntro] = useState(levelIndex === 0 && !levelResult.solved)
   const [showSummary, setShowSummary] = useState(false)
+  const [mkDone, setMkDone] = useState(false)
+  const makeup = useMakeup((idx) => generateLike(EVALUATE_LEVELS[idx]), () => setMkDone(true))
+  const missed = missedIndicesFrom(results, EVALUATE_LEVELS.length)
 
   const solved = !!levelResult.solved
   const isLast = levelIndex === EVALUATE_LEVELS.length - 1
@@ -154,12 +349,6 @@ export default function EvaluateLesson({
     onChange({ levelIndex: levelIndex + 1, results })
   }
 
-  const retryLesson = () => {
-    resetLocal()
-    setShowSummary(false)
-    onChange({ levelIndex: 0, results: {} })
-  }
-
   // ---- Intro screen ----
   if (showIntro) {
     return (
@@ -170,21 +359,48 @@ export default function EvaluateLesson({
           </button>
           <h1>{lessonTitle}</h1>
         </header>
-        <div className="intro">
-          <div className="intro__icon" aria-hidden="true">🔍</div>
-          <p className="intro__eyebrow">Before we start</p>
-          <h2 className="intro__title">To evaluate an expression, swap each variable for its value.</h2>
-          <p className="intro__blurb">
-            A variable like <strong>x</strong> is just a placeholder for a number. To{' '}
-            <strong>evaluate</strong> an expression, you replace every variable with the value
-            you're given and then do the arithmetic. For example, if{' '}
-            <strong>x = 4</strong>, then <strong>2x + 3</strong> becomes{' '}
-            <strong>2(4) + 3 = 8 + 3 = 11</strong>. Remember that <strong>2x</strong> means
-            "2 times x," so the coefficient multiplies the value you drop in. In these puzzles
-            you'll tap each variable to pop in its number, then work out the result.
+        <EvaluateIntro onDone={() => setShowIntro(false)} />
+      </div>
+    )
+  }
+
+  // ---- Make-up screen ----
+  if (makeup.active) {
+    return (
+      <div className="app">
+        <header className="app__header app__header--lesson">
+          <button className="back-btn" onClick={onBack} aria-label="Back to path">
+            ← Path
+          </button>
+          <h1>{lessonTitle}</h1>
+        </header>
+        <div className="level-head">
+          <MakeupDots stars={makeup.stars} total={makeup.total} />
+          <h2>Make-up · {EVALUATE_LEVELS[makeup.sourceIndex].title}</h2>
+        </div>
+        <EvaluateMakeupPlayer key={makeup.seq} level={makeup.question} onResult={makeup.registerResult} />
+      </div>
+    )
+  }
+
+  // ---- All caught up ----
+  if (mkDone) {
+    return (
+      <div className="app">
+        <header className="app__header app__header--lesson">
+          <button className="back-btn" onClick={onBack} aria-label="Back to path">
+            ← Path
+          </button>
+          <h1>{lessonTitle}</h1>
+        </header>
+        <div className="summary">
+          <p className="summary__eyebrow">All caught up</p>
+          <div className="summary__score summary__score--pass">★</div>
+          <p className="summary__msg summary__msg--pass">
+            Nice — you made up everything you missed. Checkpoint complete!
           </p>
-          <button className="btn intro__btn" onClick={() => setShowIntro(false)}>
-            Next →
+          <button className="btn" onClick={onPass ?? onBack}>
+            Back to path →
           </button>
         </div>
       </div>
@@ -221,26 +437,28 @@ export default function EvaluateLesson({
               return (
                 <li key={lvl.id} className="summary__item">
                   <span className={`summary__mark ${ok ? 'summary__mark--ok' : 'summary__mark--bad'}`}>
-                    {ok ? '✓' : '✗'}
+                    {ok ? '✓' : ''}
                   </span>
                   <span className="summary__title">{lvl.title}</span>
                 </li>
               )
             })}
           </ul>
-          {passed ? (
+          {missed.length === 0 ? (
             <>
               <p className="summary__msg summary__msg--pass">
-                Nice work — you passed! The next checkpoint is unlocked.
+                Perfect — you nailed every question! The next checkpoint is unlocked.
               </p>
               <button className="btn" onClick={onPass ?? onBack}>Back to path →</button>
             </>
           ) : (
             <>
-              <p className="summary__msg summary__msg--fail">
-                You scored below 80%. Retry the lesson to master it.
+              <p className="summary__msg summary__msg--todo">
+                Let's lock in the {missed.length} you missed — answer 3 similar questions for each.
               </p>
-              <button className="btn" onClick={retryLesson}>Retry lesson ↻</button>
+              <button className="btn" onClick={() => makeup.start(missed)}>
+                Let's see what we missed →
+              </button>
             </>
           )}
         </div>
@@ -410,7 +628,7 @@ export default function EvaluateLesson({
           )}
           {solved && isLast && (
             <button className="btn" onClick={() => setShowSummary(true)}>
-              Finish lesson 🎉
+              Finish lesson
             </button>
           )}
         </div>

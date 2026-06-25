@@ -69,6 +69,401 @@
   transform: scale(0.96);
 }
 
+.topbar__left {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+/* Brand acts as a "home" button back to the path. */
+.topbar__brandbtn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+/* Explicit home button next to the brand (same action, extra affordance). */
+.topbar__home {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 2px solid #1a2e05;
+  background: transparent;
+  color: #1a2e05;
+  font-weight: 800;
+  font-size: 0.8rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.topbar__home:active {
+  transform: scale(0.96);
+}
+
+.topbar__homeicon {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+/* Tiny owl avatar badge to the right of the username. */
+.topbar__avatar {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #fff7e6;
+  border: 2px solid #1a2e05;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.topbar__menuwrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.topbar__menubtn {
+  width: 38px;
+  height: 38px;
+  border: 2px solid #1a2e05;
+  border-radius: 10px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.topbar__menubtn:active {
+  transform: scale(0.96);
+}
+
+.topbar__bars {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 18px;
+}
+
+.topbar__bars span {
+  display: block;
+  height: 2.5px;
+  border-radius: 2px;
+  background: #1a2e05;
+}
+
+.topbar__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 80;
+  min-width: 172px;
+  background: #ffffff;
+  border: 2px solid var(--accent-dark);
+  border-radius: 14px;
+  padding: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.18);
+}
+
+.menu__item {
+  text-align: left;
+  border: none;
+  background: transparent;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--text);
+  padding: 0.6rem 0.7rem;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.menu__item:hover {
+  background: var(--accent-soft);
+}
+
+.menu__item--danger {
+  color: #c0392b;
+}
+
+/* ---- Avatar owl (scalable, recolorable) ---- */
+.avatarowl {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.avatarowl__inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 66px;
+  height: 64px;
+  transform-origin: top left;
+}
+
+/* Bow accessory: two triangular wings meeting at a center knot, on the head. */
+.avatar-bow {
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 16px;
+  z-index: 4;
+}
+
+.avatar-bow::before,
+.avatar-bow::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+}
+
+.avatar-bow::before {
+  left: 0;
+  border-left: 14px solid #e84b8a;
+}
+
+.avatar-bow::after {
+  right: 0;
+  border-right: 14px solid #e84b8a;
+}
+
+.avatar-bow__knot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 11px;
+  background: #c0276a;
+  border-radius: 3px;
+  z-index: 1;
+}
+
+/* Mustache accessory: a tiny pair of curls resting right on top of the beak. */
+.avatar-mustache {
+  position: absolute;
+  top: 29px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 19px;
+  height: 6px;
+  z-index: 4;
+}
+
+.avatar-mustache::before,
+.avatar-mustache::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 9.5px;
+  height: 6px;
+  background: #5a3a22;
+}
+
+.avatar-mustache::before {
+  left: 0;
+  border-radius: 60% 100% 0 60% / 100% 100% 0 100%;
+}
+
+.avatar-mustache::after {
+  right: 0;
+  border-radius: 100% 60% 60% 0 / 100% 100% 100% 0;
+}
+
+/* ---- Settings page ---- */
+.settings__section {
+  background: #ffffff;
+  border: 1px solid var(--surface-2);
+  border-radius: 18px;
+  padding: 1.25rem 1.25rem 1.4rem;
+  margin-bottom: 1.25rem;
+}
+
+.settings__heading {
+  margin: 0 0 1rem;
+  font-size: 1.15rem;
+}
+
+.settings__hint {
+  margin: -0.5rem 0 1rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.settings__msg {
+  margin: 0 0 0.75rem;
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.settings__msg--ok {
+  color: var(--accent-dark);
+}
+
+.settings__msg--bad {
+  color: #c0392b;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.field__label {
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.field__optional {
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.field__input {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  font-size: 1rem;
+  background: #ffffff;
+  color: var(--text);
+}
+
+.field__input:focus {
+  outline: none;
+  border-color: var(--accent-dark);
+}
+
+.avatar-edit {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.avatar-edit__preview {
+  flex-shrink: 0;
+  width: 140px;
+  height: 140px;
+  border-radius: 18px;
+  background: var(--accent-soft);
+  border: 2px solid var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-edit__controls {
+  flex: 1;
+  min-width: 210px;
+}
+
+.avatar-edit__colors {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.avatar-edit__picker {
+  width: 46px;
+  height: 38px;
+  padding: 0;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.avatar-edit__swatches {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.avatar-edit__swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+}
+
+.avatar-edit__swatch--on {
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px #ffffff inset;
+}
+
+.avatar-edit__accessories {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.chip {
+  border: 2px solid var(--line);
+  background: #ffffff;
+  color: var(--text);
+  font-weight: 800;
+  font-size: 0.9rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.chip--on {
+  border-color: var(--accent-dark);
+  background: var(--accent);
+  color: #1a2e05;
+}
+
+/* ---- About page ---- */
+.about {
+  max-width: 520px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 1rem 0.5rem 3rem;
+}
+
+.about__text {
+  font-size: 1.08rem;
+  line-height: 1.75;
+  color: var(--text);
+}
+
+.about__owl {
+  display: flex;
+  justify-content: center;
+  margin-top: 2.5rem;
+}
+
 .auth__error {
   margin: 0;
   color: #c0392b;
@@ -412,6 +807,45 @@ body {
   transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* ---- Make-up dots -> stars (shown instead of the progress bar while a
+   student is making up missed levels) ---- */
+.makeup-dots {
+  display: flex;
+  gap: 0.7rem;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 0.9rem;
+  min-height: 30px;
+}
+
+.makeup-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  color: transparent;
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), color 0.25s ease;
+}
+
+.makeup-dot--star {
+  background: transparent;
+  color: #f6d860;
+  font-size: 1.7rem;
+  text-shadow: 0 1px 2px rgba(214, 178, 38, 0.4);
+  transform: scale(1.12);
+  animation: makeup-pop 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes makeup-pop {
+  0% { transform: scale(0.3); opacity: 0.2; }
+  60% { transform: scale(1.35); }
+  100% { transform: scale(1.12); opacity: 1; }
+}
+
 .level-head h2 {
   margin: 0.5rem 0 0.25rem;
   font-size: 1.25rem;
@@ -629,6 +1063,16 @@ body {
   margin-top: 0.5rem;
 }
 
+/* Solve/whiteboard levels have no dots or ropes, so drop the extra headroom
+   and center the terms in the box. */
+.terms-area--solve {
+  padding: 1.25rem 1rem;
+}
+
+.terms-area--solve .terms-row {
+  align-items: center;
+}
+
 .rope-layer {
   position: absolute;
   inset: 0;
@@ -745,6 +1189,33 @@ body {
 .choice:disabled {
   cursor: default;
   opacity: 0.55;
+}
+
+/* Highlight the right answer once a review question is locked in. */
+.choice--correct,
+.choice--correct:disabled {
+  opacity: 1;
+  background: var(--ok, #d7f5c2);
+  border-color: var(--ok-dark, #6aa329);
+  color: #1a2e05;
+}
+
+/* Mark the wrong answer a student picked once a question is locked in. */
+.choice--wrong,
+.choice--wrong:disabled {
+  opacity: 1;
+  background: #fde2e1;
+  border-color: #e2786f;
+  color: #7a1f17;
+}
+
+/* The prompt for a review question. */
+.review-q {
+  margin: 0.25rem auto 0.75rem;
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-align: center;
 }
 
 /* ---- Distributive property: area model ---- */
@@ -1071,6 +1542,12 @@ body {
   stroke: var(--accent-dark);
 }
 
+/* Second line for the systems-of-equations lesson, drawn in a contrasting hue
+   so the two lines (and their crossing point) are easy to tell apart. */
+.graph__line--line2 {
+  stroke: #5b8def;
+}
+
 .graph__run {
   stroke: var(--weight);
   stroke-width: 4;
@@ -1192,6 +1669,53 @@ body {
 
 .streak__btn {
   width: 100%;
+}
+
+/* Restart confirmation modal (shown when replaying a completed checkpoint). */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.confirm {
+  width: 100%;
+  max-width: 360px;
+  background: #ffffff;
+  border: 2px solid var(--accent-dark);
+  border-radius: 22px;
+  padding: 1.8rem 1.5rem 1.6rem;
+  text-align: center;
+}
+
+.confirm__icon {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.confirm__title {
+  margin: 0.5rem 0 0;
+  font-size: 1.4rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.confirm__msg {
+  margin: 0.5rem 0 1.25rem;
+  font-size: 0.98rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.confirm__actions {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: center;
 }
 
 /* Streak chip on the path header. */
@@ -1502,6 +2026,299 @@ body {
   font-size: 1.05rem;
 }
 
+/* Stacked call-to-action buttons on the new-account placement offer. */
+.placement-offer__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  align-items: center;
+}
+
+/* ---- Animated concept intro (Solving Equations) ---- */
+.bintro {
+  max-width: 520px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 1rem 0.5rem 3rem;
+}
+
+.bintro__stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.75rem;
+}
+
+.bintro__owlrow {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  height: 72px;
+  z-index: 2;
+}
+
+.bintro__owl {
+  position: relative;
+  width: 66px;
+  height: 64px;
+  display: block;
+}
+
+.bintro__owl--gone {
+  animation: bintro-owl-off 0.8s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+}
+
+@keyframes bintro-owl-off {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+  25% { transform: translate(0, -42px) rotate(-10deg); opacity: 1; }
+  100% { transform: translate(220px, -150px) rotate(22deg); opacity: 0; }
+}
+
+.bintro__scale {
+  width: min(420px, 100%);
+}
+
+.bintro__top {
+  position: relative;
+  height: 64px;
+  margin-bottom: 0.25rem;
+}
+
+.bintro__fulcrum {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 22px solid transparent;
+  border-right: 22px solid transparent;
+  border-bottom: 56px solid var(--line);
+}
+
+.bintro__beam {
+  position: absolute;
+  top: 6px;
+  left: 10%;
+  right: 10%;
+  height: 12px;
+  border-radius: 8px;
+  background: var(--line-dark);
+  transform-origin: 50% 50%;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bintro__cap {
+  position: absolute;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: translateY(-50%);
+}
+
+.bintro__cap--l { left: -8px; }
+.bintro__cap--r { right: -8px; }
+
+.bintro__pans {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.bintro__slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bintro__cord {
+  width: 2px;
+  height: 22px;
+  background: var(--line);
+}
+
+.bintro__chips {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: center;
+  align-items: flex-end;
+  min-height: 56px;
+  margin-bottom: 0.3rem;
+}
+
+.bintro__plate {
+  width: 100%;
+  max-width: 150px;
+  height: 16px;
+  background: var(--line-dark);
+  border-radius: 5px 5px 16px 16px / 5px 5px 26px 26px;
+}
+
+.bintro__chip {
+  min-width: 48px;
+  height: 50px;
+  padding: 0 0.4rem;
+  background: var(--weight);
+  clip-path: polygon(22% 0%, 78% 0%, 100% 100%, 0% 100%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #ffffff;
+  animation: bintro-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.bintro__chip--var {
+  background: var(--accent);
+  color: #1a2e05;
+  font-style: italic;
+}
+
+.bintro__chip--plus {
+  min-width: 40px;
+  height: 42px;
+  font-size: 1.05rem;
+  background: var(--accent-dark);
+}
+
+@keyframes bintro-pop {
+  0% { transform: translateY(-8px) scale(0.6); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Step 0: gentle back-and-forth teeter while Bruh sits on the scale. */
+.bintro__scale--teeter .bintro__beam {
+  animation: bintro-teeter-beam 2.8s ease-in-out infinite;
+}
+
+.bintro__scale--teeter .bintro__slot:first-child {
+  animation: bintro-teeter-left 2.8s ease-in-out infinite;
+}
+
+.bintro__scale--teeter .bintro__slot:last-child {
+  animation: bintro-teeter-right 2.8s ease-in-out infinite;
+}
+
+@keyframes bintro-teeter-beam {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+}
+
+@keyframes bintro-teeter-left {
+  0%, 100% { transform: translateY(-10px); }
+  50% { transform: translateY(10px); }
+}
+
+@keyframes bintro-teeter-right {
+  0%, 100% { transform: translateY(10px); }
+  50% { transform: translateY(-10px); }
+}
+
+.bintro__text {
+  margin: 0 auto 2rem;
+  max-width: 480px;
+  color: var(--text);
+  font-size: 1.05rem;
+  line-height: 1.7;
+  animation: bintro-fade 0.5s ease both;
+}
+
+@keyframes bintro-fade {
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.bintro__btn {
+  padding: 0.85rem 2rem;
+  font-size: 1.05rem;
+  animation: bintro-fade 0.4s ease both;
+}
+
+/* ---- Animated concept intro (Order of Operations) ---- */
+.ointro {
+  max-width: 560px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 2rem 0.5rem 3rem;
+}
+
+.ointro__board {
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.ointro__eq {
+  max-width: 360px;
+  flex: 0 1 auto;
+}
+
+.ointro__eq .ointro__tok--hot {
+  background: var(--accent);
+  color: #1a2e05;
+  border-radius: 10px;
+  animation: ointro-pulse 0.68s ease;
+}
+
+@keyframes ointro-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(167, 222, 60, 0.7); }
+  100% { box-shadow: 0 0 0 9px rgba(167, 222, 60, 0); }
+}
+
+.ointro__tok--pop {
+  display: inline-block;
+  animation: ointro-pop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes ointro-pop {
+  0% { transform: scale(0.35); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.ointro__pemdas .pemdas__row {
+  position: relative;
+  transition: background 0.25s, border-color 0.25s;
+}
+
+.ointro__owl {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% - 4px);
+  width: 54px;
+  height: 52px;
+  transform: translateX(-50%);
+  z-index: 3;
+  animation: ointro-hop 0.52s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Keep the owl at its native 66×64 proportions, just scaled down — squeezing
+   the raw element shifts the bottom-anchored belly up over the eyes. */
+.ointro__owlinner {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 66px;
+  height: 64px;
+  transform: translateX(-50%) scale(0.8);
+  transform-origin: bottom center;
+}
+
+@keyframes ointro-hop {
+  0% { transform: translate(-50%, -36px) rotate(-9deg); opacity: 0; }
+  60% { transform: translate(-50%, 5px) rotate(3deg); opacity: 1; }
+  100% { transform: translate(-50%, 0) rotate(0deg); opacity: 1; }
+}
+
+.ointro__text {
+  margin-top: 0.5rem;
+}
+
 /* ---- Lesson summary screen ---- */
 .summary {
   text-align: center;
@@ -1524,12 +2341,9 @@ body {
   margin: 0.5rem 0 0.25rem;
 }
 
-.summary__score--pass {
-  color: var(--accent-dark);
-}
-
+.summary__score--pass,
 .summary__score--fail {
-  color: #dc2626;
+  color: var(--accent-dark);
 }
 
 .summary__count {
@@ -1577,7 +2391,7 @@ body {
 }
 
 .summary__mark--bad {
-  background: #dc2626;
+  background: var(--line);
 }
 
 .summary__title {
@@ -1597,6 +2411,11 @@ body {
 
 .summary__msg--fail {
   color: #dc2626;
+}
+
+.summary__msg--todo {
+  color: var(--text);
+  font-weight: 800;
 }
 
 
@@ -1664,18 +2483,14 @@ body {
 }
 
 /* ---- Welcome screen ---- */
+/* Welcome / login pages share a pale-green backdrop with sporadic white polka
+   dots so the name-entry screen matches the login page for consistency. */
 .welcome {
   min-height: calc(100vh - var(--topbar-h));
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  background: var(--accent-soft);
-}
-
-/* Logged-out (login) page: inverted homepage backdrop — pale green with
-   sporadic white diagonal polka dots. */
-.welcome--auth {
   background-color: #d9efc6;
   background-image:
     radial-gradient(#ffffff 2px, transparent 2.5px),
@@ -1756,6 +2571,66 @@ body {
   font-size: 1.05rem;
 }
 
+.auth__divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.1rem 0 0.9rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.auth__divider::before,
+.auth__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--surface-2);
+}
+
+.auth__google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.8rem 1.4rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #3c4043;
+  background: #ffffff;
+  border: 2px solid var(--surface-2);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.auth__google:hover {
+  border-color: #c6ccd4;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.auth__google:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth__google-icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.auth__hint {
+  margin: 0.6rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -1769,86 +2644,199 @@ body {
   min-height: calc(100vh - var(--topbar-h));
 }
 
-/* Info card sits in the empty space beside the centered trail on wide
-   screens; it's hidden on narrow/mobile where there's no spare room. */
+/* Info card explaining the track. On wide screens it floats in the empty space
+   beside the centered trail; on narrow/mobile it sits as a banner above the
+   trail so the student always sees what they're about to learn. */
 .infocard {
-  display: none;
+  display: block;
+  width: min(540px, 100%);
+  margin: 0 auto 1.5rem;
+  background: #ffffff;
+  border: 2px solid #9aa7b8;
+  border-radius: 18px;
+  padding: 1.4rem;
+  text-align: left;
+}
+
+.infocard__eyebrow {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-dark);
+  background: var(--accent-soft);
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+}
+
+.infocard__title {
+  margin: 0.7rem 0 0;
+  font-size: 1.7rem;
+  letter-spacing: -0.02em;
+  color: var(--accent-dark);
+}
+
+.infocard__title::after {
+  content: '';
+  display: block;
+  width: 48px;
+  height: 4px;
+  margin-top: 0.5rem;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.infocard__caption {
+  margin: 0.85rem 0 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.infocard__list {
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.infocard__list li {
+  position: relative;
+  padding-left: 1.4rem;
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.infocard__list li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-weight: 800;
+  color: var(--accent-dark);
 }
 
 @media (min-width: 1000px) {
   .infocard {
-    display: block;
     position: fixed;
+    /* Vertically centered on screen; max-height + scroll keep the weekly graph
+       from ever overflowing the viewport on short screens. */
     top: 50%;
     left: max(1.5rem, calc(50% - 540px));
     transform: translateY(-50%);
     width: 260px;
-    background: #ffffff;
-    border: 2px solid #9aa7b8;
-    border-radius: 18px;
-    padding: 1.5rem 1.4rem;
-    text-align: left;
-  }
-
-  .infocard__eyebrow {
-    display: inline-block;
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--accent-dark);
-    background: var(--accent-soft);
-    padding: 0.25rem 0.6rem;
-    border-radius: 999px;
+    margin: 0;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
   }
 
   .infocard__title {
-    margin: 0.7rem 0 0;
     font-size: 1.9rem;
-    letter-spacing: -0.02em;
   }
+}
 
-  .infocard__title::after {
-    content: '';
-    display: block;
-    width: 48px;
-    height: 4px;
-    margin-top: 0.5rem;
-    background: var(--accent);
-    border-radius: 999px;
-  }
+/* ---- Weekly activity bar graph (bottom of the infocard) ---- */
+.weekbars {
+  margin-top: 1.2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e6e9ef;
+}
 
-  .infocard__caption {
-    margin: 0.85rem 0 0;
-    font-size: 0.92rem;
-    line-height: 1.5;
-    color: var(--muted);
-  }
+.weekbars__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
 
-  .infocard__list {
-    margin: 1rem 0 0;
-    padding: 0;
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 0.55rem;
-  }
+.weekbars__title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-dark);
+}
 
-  .infocard__list li {
-    position: relative;
-    padding-left: 1.4rem;
-    font-size: 0.86rem;
-    line-height: 1.35;
-  }
+.weekbars__total {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted);
+}
 
-  .infocard__list li::before {
-    content: '✓';
-    position: absolute;
-    left: 0;
-    top: 0;
-    font-weight: 800;
-    color: var(--accent-dark);
-  }
+.weekbars__chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.35rem;
+  margin-top: 0.7rem;
+}
+
+.weekbars__col {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.weekbars__count {
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+  height: 0.8rem;
+  color: var(--accent-dark);
+}
+
+.weekbars__barwrap {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  height: 64px;
+  background: #f1f3f7;
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.weekbars__bar {
+  width: 70%;
+  min-height: 0;
+  background: linear-gradient(180deg, var(--accent), var(--accent-dark));
+  border-radius: 6px 6px 0 0;
+  transition: height 0.4s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.weekbars__col--today .weekbars__bar {
+  background: linear-gradient(180deg, #ffd54a, #f4b400);
+}
+
+.weekbars__col--future {
+  opacity: 0.55;
+}
+
+.weekbars__day {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.weekbars__day--today {
+  color: var(--accent-dark);
+  position: relative;
+}
+
+.weekbars__day--today::after {
+  content: '';
+  display: block;
+  width: 4px;
+  height: 4px;
+  margin: 2px auto 0;
+  border-radius: 50%;
+  background: #f4b400;
 }
 
 .path__header {
@@ -1873,8 +2861,59 @@ body {
 
 .path__greeting {
   margin: 0;
-  color: var(--muted);
-  font-size: 0.95rem;
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+/* Section bar that introduces each group of checkpoints on the trail. The
+   whole group sits in its own layer above the dotted trail line (which is the
+   absolutely-positioned .trail__lines SVG at z-index 0), so the banner covers
+   the line while the gaps between checkpoints still let it show through. */
+.path__section-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.25rem;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.path__section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  width: min(460px, 94%);
+  margin: 0.5rem auto 0.25rem;
+  padding: 0.7rem 1.25rem;
+  background: var(--accent);
+  border: 2px solid var(--accent-dark);
+  border-radius: 999px;
+  box-shadow: 0 3px 0 rgba(111, 168, 14, 0.25);
+  /* Sit above the dotted trail line (.trail__lines is z-index: 0). */
+  position: relative;
+  z-index: 1;
+}
+
+/* Decorative ticks flanking the section title. */
+.path__section-line {
+  width: 26px;
+  height: 2px;
+  background: #1a2e05;
+  opacity: 0.4;
+  border-radius: 2px;
+}
+
+.path__section-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #1a2e05;
+  text-align: center;
 }
 
 .trail {
@@ -2042,11 +3081,12 @@ body {
   background: #fff;
   border: 3px solid #8a5d34;
   transform-origin: center;
+  z-index: 2;
   animation: owl-blink 3.4s ease-in-out infinite;
 }
 
-.owl__eye--l { left: 6px; }
-.owl__eye--r { right: 6px; }
+.owl__eye--l { left: 3px; }
+.owl__eye--r { right: 3px; }
 
 .owl__eye::after {
   content: '';
@@ -2125,6 +3165,7 @@ body {
   border-radius: 50%;
   background: #e9d9bb;
   border: 2px solid #c9b48a;
+  z-index: 0;
 }
 
 .owl__beak {
@@ -2246,6 +3287,24 @@ body {
 .checkpoint__icon {
   font-size: 1.6rem;
   font-weight: 800;
+}
+
+/* The Review checkpoint is larger so it stands out as the section's capstone. */
+.checkpoint--big {
+  width: 108px;
+  height: 108px;
+  border-width: 5px;
+  box-shadow: 0 4px 0 rgba(111, 168, 14, 0.25);
+}
+
+/* The Review checkpoint is taller, so lift Bruh up so he peeks over the top
+   instead of being half-swallowed by the bigger circle. */
+.checkpoint-stage--big .owl {
+  bottom: 74px;
+}
+
+.checkpoint--big .checkpoint__icon {
+  font-size: 2.1rem;
 }
 
 .checkpoint--unlocked {

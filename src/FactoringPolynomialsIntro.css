@@ -1,0 +1,192 @@
+/* Animated concept intro for Factoring Polynomials. Builds on the shared
+   `.ointro` / `.token` styles in index.css; only the target-marking, the
+   factor-pair search, and the rewrite live here. */
+
+.facpoly__board {
+  flex-direction: column;
+  gap: 0.85rem;
+  min-height: 240px;
+  padding: 1.5rem 1rem;
+}
+
+/* Stage holds the trinomial plus the absolutely-positioned owl hopping above
+   it. Extra top padding leaves room for the jump arc. */
+.facpoly__stage {
+  position: relative;
+  width: 100%;
+  padding-top: 56px;
+  display: flex;
+  justify-content: center;
+}
+
+.facpoly__eq {
+  position: relative;
+  gap: 0.35rem;
+  transition: gap 0.3s ease;
+}
+
+.facpoly__eq .token--static {
+  transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+/* Owl wrapper: pinned to the row's left edge, slid horizontally to the target
+   token center. The transition on transform is what makes the move a hop. */
+.facpoly__owl {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% - 50px);
+  width: 0;
+  height: 0;
+  z-index: 4;
+  opacity: 0;
+  transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+}
+
+.facpoly__owl--ready {
+  opacity: 1;
+}
+
+.facpoly__owlhop {
+  position: absolute;
+  left: -23px;
+  bottom: 0;
+  width: 46px;
+  height: 44px;
+  animation: facpoly-jump 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes facpoly-jump {
+  0% { transform: translateY(0); }
+  35% { transform: translateY(-30px); }
+  65% { transform: translateY(4px); }
+  100% { transform: translateY(0); }
+}
+
+.facpoly__owlbody {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 66px;
+  height: 64px;
+  transform: translateX(-50%) scale(0.7);
+  transform-origin: bottom center;
+}
+
+/* The two target chips (multiply to 6 / add to 5), revealed together. */
+.facpoly__goal {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.facpoly__goal--on {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.facpoly__goal-chip {
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  border: 2px solid var(--accent);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.facpoly__goal-chip strong {
+  color: var(--accent-dark);
+}
+
+/* The factor-pair search: each candidate row slides in, then gets a verdict. */
+.facpoly__search {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: center;
+  min-height: 1px;
+}
+
+.facpoly__row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 12px;
+  border: 2px solid var(--border, #d9d9d9);
+  background: var(--card, #fff);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  animation: facpoly-rowin 0.35s ease;
+  transition: border-color 0.25s ease, background 0.25s ease, opacity 0.25s ease;
+}
+
+@keyframes facpoly-rowin {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.facpoly__row--yes {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.facpoly__row--no {
+  opacity: 0.55;
+}
+
+.facpoly__pair {
+  color: var(--accent-dark);
+}
+
+.facpoly__sum {
+  color: var(--muted, #777);
+}
+
+.facpoly__mark {
+  width: 1.1em;
+  text-align: center;
+  font-weight: 900;
+}
+
+.facpoly__row--yes .facpoly__mark {
+  color: var(--accent-dark);
+}
+
+.facpoly__row--no .facpoly__mark {
+  color: var(--danger, #c0392b);
+}
+
+/* The rewritten, factored form popping in below the search. */
+.facpoly__result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.facpoly__arrow {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--accent-dark);
+  line-height: 1;
+}
+
+.facpoly__factored {
+  display: inline-block;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text);
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  background: var(--accent-soft);
+}
+
+.facpoly__text {
+  min-height: 4.5em;
+}
