@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import OwlSpeech from './OwlSpeech.jsx'
+import AvatarEditor from './AvatarEditor.jsx'
+import { DEFAULT_AVATAR } from './AvatarOwl.jsx'
 
 export default function Welcome({ onContinue }) {
   const [name, setName] = useState('')
+  const [avatar, setAvatar] = useState(DEFAULT_AVATAR)
 
   const submit = (e) => {
     e.preventDefault()
     const trimmed = name.trim()
     if (!trimmed) return
-    onContinue(trimmed)
+    onContinue({ name: trimmed, avatar })
   }
 
   return (
@@ -19,7 +22,7 @@ export default function Welcome({ onContinue }) {
 
         <OwlSpeech
           tone="neutral"
-          text="Hoot hoot! I'm Bruh, your owl guide 🦉 — I'll be right here helping you learn algebra today. First, what should I call you? Let's get started!"
+          text="Hoot hoot! I'm Bruh, your owl guide — I'll be right here helping you learn algebra today. First, what should I call you, and how should we dress up your owl?"
         />
 
         <form className="welcome__form" onSubmit={submit}>
@@ -32,6 +35,12 @@ export default function Welcome({ onContinue }) {
             maxLength={24}
             autoFocus
           />
+
+          <div className="welcome__avatar">
+            <p className="welcome__avatar-label">Make your owl your own</p>
+            <AvatarEditor value={avatar} onChange={setAvatar} previewSize={104} />
+          </div>
+
           <button className="btn welcome__btn" type="submit" disabled={!name.trim()}>
             Continue →
           </button>

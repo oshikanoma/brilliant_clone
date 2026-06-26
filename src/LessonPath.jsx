@@ -141,6 +141,7 @@ export default function LessonPath({
   dailyCorrect = {},
   onStart,
   onRestart,
+  onHomework,
   unlocked = 1,
   completed = {},
   graduated = false,
@@ -205,6 +206,17 @@ export default function LessonPath({
           <li>Track your progress along the path</li>
         </ul>
         <WeekBars dailyCorrect={dailyCorrect} />
+        {onHomework && (
+          <button type="button" className="infocard__homework" onClick={onHomework}>
+            <span className="owl owl--float" aria-hidden="true">
+              <Owl />
+            </span>
+            <span className="infocard__homework-text">
+              <strong>Stuck on homework?</strong>
+              <span>Ask Bruh for a custom lesson</span>
+            </span>
+          </button>
+        )}
       </aside>
 
       <div className="trail" ref={trailRef}>

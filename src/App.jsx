@@ -50,6 +50,7 @@ import { LEVELS as QUADRATICS_REVIEW_LEVELS } from './quadraticsReviewData.js'
 import { LEVELS as FINAL_EXAM_LEVELS } from './finalExamData.js'
 import Settings from './Settings.jsx'
 import About from './About.jsx'
+import HomeworkHelp from './HomeworkHelp.jsx'
 import AvatarOwl, { DEFAULT_AVATAR } from './AvatarOwl.jsx'
 import {
   getCurrentUser,
@@ -71,10 +72,9 @@ function PlacementOffer({ name, onTake, onSkip }) {
       <p className="intro__eyebrow">Welcome{name ? `, ${name}` : ''}</p>
       <h2 className="intro__title">Already know some of this?</h2>
       <p className="intro__blurb">
-        Take a quick <strong>adaptive placement test</strong>. Bruh picks each question based on how
-        you answer the last one — getting harder when you're right, easier when you're not — to find
-        exactly where you should start. Do well and you'll skip ahead, anywhere from
-        <strong> Graphs</strong> to <strong>Polynomials</strong>.
+        Take a quick <strong>adaptive placement test</strong>. Bruh works up through the topics
+        section by section, and you only move ahead once you've shown you've really got it. We place
+        you a touch behind where you land — it's better to firm up a concept than skip past it.
       </p>
       <div className="placement-offer__actions">
         <button className="btn intro__btn" onClick={onTake}>
@@ -172,6 +172,17 @@ function TopBar({ displayName, avatar, onNavigate, onLogout }) {
             <>
               <div className="topbar__backdrop" onClick={() => setOpen(false)} />
               <div className="menu" role="menu">
+                <button
+                  type="button"
+                  className="menu__item"
+                  role="menuitem"
+                  onClick={() => {
+                    setOpen(false)
+                    onNavigate('homework')
+                  }}
+                >
+                  Bruh’s Homework Help
+                </button>
                 <button
                   type="button"
                   className="menu__item"
@@ -347,8 +358,9 @@ function Session({ username, defaultName = '', isGoogle = false, onLogout }) {
   if (screen === 'welcome') {
     screenEl = (
       <Welcome
-        onContinue={(n) => {
+        onContinue={({ name: n, avatar: a }) => {
           setName(n)
+          if (a) setAvatar(a)
           setScreen('placement-offer')
         }}
       />
@@ -386,6 +398,7 @@ function Session({ username, defaultName = '', isGoogle = false, onLogout }) {
           setCheckpoint(index)
           setScreen('lesson')
         }}
+        onHomework={() => setScreen('homework')}
       />
     )
   } else if (screen === 'paint') {
@@ -408,6 +421,8 @@ function Session({ username, defaultName = '', isGoogle = false, onLogout }) {
     )
   } else if (screen === 'about') {
     screenEl = <About onBack={() => setScreen('path')} />
+  } else if (screen === 'homework') {
+    screenEl = <HomeworkHelp onBack={() => setScreen('path')} />
   } else if (checkpoint === 1) {
     screenEl = <OrderLesson {...lessonProps} />
   } else if (checkpoint === 2) {

@@ -1,0 +1,324 @@
+/* Entry point on the path's infocard */
+.infocard__homework {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.7rem 0.85rem;
+  border: 2px solid var(--accent-dark);
+  border-radius: 14px;
+  background: var(--accent-soft);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.15s;
+}
+.infocard__homework:hover {
+  box-shadow: 0 4px 12px rgba(111, 168, 14, 0.25);
+}
+.infocard__homework:active {
+  transform: translateY(1px);
+}
+.infocard__homework-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.infocard__homework-text span {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.hw {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.hw__main {
+  flex: 1;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 1rem 1rem 7rem;
+}
+
+/* ---- Empty-state hero ---- */
+.hw-hero {
+  text-align: center;
+  padding: 1.5rem 0.5rem 0.5rem;
+}
+.hw-hero__title {
+  margin: 0.5rem 0 1rem;
+  font-size: 1.5rem;
+  color: var(--text);
+}
+/* OwlSpeech is left-aligned (flex); keep it readable but centered-ish in hero. */
+.hw-hero .owl-speech {
+  max-width: 30rem;
+  margin: 0 auto;
+  text-align: left;
+}
+.hw-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+.hw-chip {
+  border: 2px solid var(--line);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 0.5rem 0.9rem;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+}
+.hw-chip:hover {
+  border-color: var(--accent-dark);
+  background: var(--accent-soft);
+}
+.hw-chip:active {
+  transform: translateY(1px);
+}
+
+/* ---- Conversation thread ---- */
+.hw-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.hw-exchange {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.hw-ask {
+  display: flex;
+  justify-content: flex-end;
+}
+.hw-ask__bubble {
+  margin: 0;
+  max-width: 80%;
+  background: var(--accent);
+  color: #1f2d05;
+  font-weight: 700;
+  padding: 0.7rem 1rem;
+  border-radius: 16px 16px 4px 16px;
+  line-height: 1.4;
+  box-shadow: 0 2px 0 var(--accent-dark);
+}
+
+/* ---- Thinking indicator: standard bobbing owl + animated dots ---- */
+.hw-think {
+  align-self: flex-start;
+  max-width: 100%;
+}
+.hw-dots span {
+  animation: hw-blink 1.2s infinite;
+}
+.hw-dots span:nth-child(2) { animation-delay: 0.2s; }
+.hw-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+/* ---- Lesson card ---- */
+.hw-lesson {
+  align-self: flex-start;
+  width: 100%;
+  background: var(--bg);
+  border: 2px solid var(--line);
+  border-radius: 18px;
+  padding: 1.1rem 1.2rem 1.3rem;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+  animation: hw-pop 0.35s ease;
+}
+.hw-lesson__eyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: var(--accent-dark);
+}
+.hw-lesson__title {
+  margin: 0.15rem 0 0.75rem;
+  font-size: 1.3rem;
+  color: var(--text);
+}
+.hw-lesson__intro {
+  margin-top: 0.25rem;
+}
+
+/* ---- Animated "how to solve it" walkthrough ---- */
+.hw-walk {
+  margin-top: 0.75rem;
+}
+.hw-walk__label {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: var(--accent-dark);
+}
+.hw-walk__steps {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.hw-walk__step {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+  padding: 0.55rem 0.7rem;
+  border-radius: 12px;
+  background: var(--surface);
+  line-height: 1.5;
+  color: var(--text);
+  animation: hw-step-in 0.35s ease both;
+}
+.hw-walk__step--current {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.hw-walk__num {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #1f2d05;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  font-size: 0.8rem;
+}
+.hw-walk__text {
+  padding-top: 0.1rem;
+}
+
+/* ---- Interactive practice problems (checkpoint-style MCQ) ---- */
+.hw-problems {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.hw-problem {
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  padding: 0.9rem 1rem 1rem;
+  background: var(--bg);
+  animation: hw-step-in 0.4s ease both;
+}
+.hw-problem__label {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: var(--accent-dark);
+}
+/* The .review-q, .choices, .choice and .answer-feedback styles are global (shared
+   with the checkpoints and placement test), so the problems match them exactly. */
+.hw-problem .review-q {
+  margin-bottom: 0.75rem;
+}
+
+.hw-tip {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+  background: #fff7e6;
+  border: 1px solid #f2d98a;
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+  line-height: 1.5;
+  opacity: 0;
+  animation: hw-step-in 0.4s ease forwards;
+}
+.hw-tip__label {
+  flex: 0 0 auto;
+  font-weight: 800;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #b07a00;
+}
+
+.hw-error {
+  align-self: flex-start;
+  color: #b42318;
+  background: #fee4e2;
+  border: 1px solid #fda29b;
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+  margin: 0;
+}
+
+/* ---- Composer ---- */
+.hw-composer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-end;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0.75rem 1rem 1rem;
+  background: linear-gradient(to top, var(--bg) 70%, rgba(255, 255, 255, 0));
+}
+.hw-composer__input {
+  flex: 1;
+  resize: none;
+  font: inherit;
+  padding: 0.7rem 0.9rem;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.4;
+}
+.hw-composer__input:focus {
+  outline: none;
+  border-color: var(--accent-dark);
+}
+.hw-composer__send {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* ---- Keyframes ---- */
+@keyframes hw-blink {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 1; }
+}
+@keyframes hw-pop {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes hw-step-in {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hw-dots span,
+  .hw-problem,
+  .hw-tip,
+  .hw-lesson {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}

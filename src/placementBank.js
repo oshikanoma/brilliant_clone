@@ -252,3 +252,20 @@ export function pickQuestion(checkpointIndex, usedIds = new Set()) {
   const arr = PLACEMENT_QUESTIONS[checkpointIndex] || []
   return arr.find((q) => !usedIds.has(q.id)) || arr[0] || null
 }
+
+// Section-gated placement plan. The test walks these sections IN ORDER and asks
+// the `probes` (an easy + a harder checkpoint) for each. You only advance to the
+// next section if you got BOTH probes right; the moment a section isn't fully
+// cleared, that's where you're placed — so you can never "jump ahead" off a
+// single lucky answer, and you always (re)start at the beginning of the first
+// section you weren't solid on.
+//
+// `startCheckpoint` is the flat CHECKPOINTS index where the section begins; the
+// checkpoint just before it (a Review for later sections) is the last thing
+// marked complete when you place into that section.
+export const PLACEMENT_SECTIONS = [
+  { name: 'Algebra Foundations', startCheckpoint: 0, probes: [0, 3] },
+  { name: 'Graphs and Linear Relationships', startCheckpoint: 6, probes: [6, 9] },
+  { name: 'Expressions with Exponents', startCheckpoint: 13, probes: [13, 16] },
+  { name: 'Quadratics and Polynomials', startCheckpoint: 19, probes: [19, 22] },
+]

@@ -1,37 +1,57 @@
-// Deterministic binary-search placement engine. This is the fallback used when
-// the AI proxy is unavailable (no key configured, network/API error), and it's
-// also used server-side to sanity-check / repair the AI's decisions. It keeps
-// the feature fully functional even with no AI at all.
+import { PLACEMENT_SECTIONS } from './placementBank.js'
+
+// Section-gated, conservative placement engine.
 //
-// The curriculum is an ordered list of probeable checkpoints. Given the answer
-// history, we know everything at/below the highest CORRECT index is mastered and
-// everything at/above the lowest WRONG index is not — so we probe the middle of
-// the remaining open interval, converging in ~log2(n) questions.
-
-export const MAX_PROBES = 8
-
+// Design goals (from real feedback):
+//  - Tailored & in-order: you can't get yanked to "graphing" off one lucky
+//    fundamentals answer. We walk sections from easiest to hardest and only let
+//    you advance past a section if you clear BOTH of its probe questions.
+//  - More thorough: 2 probes per section (an easy + a harder one), up to 8
+//    questions for a strong student, instead of a 3-question binary search.
+//  - Conservative: you're placed at the START of the first section you didn't
+//    fully clear ("better to relearn a concept than skip over it"). Even a
+//    perfect run still drops you into the final section rather than skipping it.
+//
 // A decision is one of:
 //   { action: 'ask', checkpointIndex }
-//   { action: 'place', completedThrough }   // -1 means "start from the beginning"
-export function localDecide(history = [], curriculum = []) {
-  const indices = curriculum.map((c) => c.checkpointIndex).sort((a, b) => a - b)
-  const asked = new Set(history.map((h) => h.checkpointIndex))
-  const correct = history.filter((h) => h.correct).map((h) => h.checkpointIndex)
-  const wrong = history.filter((h) => !h.correct).map((h) => h.checkpointIndex)
+//   { action: 'place', completedThrough, sectionName }   // -1 => start at the beginning
 
-  // Highest mastered (floor) and lowest missed (ceiling).
-  const lo = correct.length ? Math.max(...correct) : -1
-  const hi = wrong.length ? Math.min(...wrong) : Infinity
+// completedThrough for placing the student at the *start* of section `si`: mark
+// everything up to (but not including) that section's first checkpoint complete.
+function placeAtSection(si) {
+  const section = PLACEMENT_SECTIONS[si]
+  return {
+    action: 'place',
+    completedThrough: section.startCheckpoint - 1,
+    sectionName: section.name,
+  }
+}
 
-  if (history.length >= MAX_PROBES) {
-    return { action: 'place', completedThrough: lo }
+export function nextStep(history = []) {
+  const answeredCorrect = (cp) => {
+    const h = history.find((x) => x.checkpointIndex === cp)
+    return h ? !!h.correct : null // null = not asked yet
   }
 
-  const candidates = indices.filter((i) => i > lo && i < hi && !asked.has(i))
-  if (candidates.length === 0) {
-    return { action: 'place', completedThrough: lo }
+  for (let si = 0; si < PLACEMENT_SECTIONS.length; si++) {
+    const { probes } = PLACEMENT_SECTIONS[si]
+
+    // Ask any not-yet-answered probe in this section (in order).
+    const unanswered = probes.find((cp) => answeredCorrect(cp) === null)
+    if (unanswered !== undefined) {
+      return { action: 'ask', checkpointIndex: unanswered }
+    }
+
+    // All probes answered — did they clear the whole section?
+    const cleared = probes.every((cp) => answeredCorrect(cp) === true)
+    if (!cleared) {
+      // First shaky section → this is where they (re)start.
+      return placeAtSection(si)
+    }
+    // Cleared this section; continue probing the next one.
   }
 
-  const mid = candidates[Math.floor(candidates.length / 2)]
-  return { action: 'ask', checkpointIndex: mid }
+  // Cleared every section. Stay conservative: still start them in the final
+  // section rather than skipping straight to the exam.
+  return placeAtSection(PLACEMENT_SECTIONS.length - 1)
 }

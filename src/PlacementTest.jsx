@@ -2,78 +2,49 @@ import { useEffect, useRef, useState } from 'react'
 import OwlSpeech from './OwlSpeech.jsx'
 import { shuffleChoices } from './shuffleChoices.js'
 import { CURRICULUM, pickQuestion } from './placementBank.js'
-import { decideNextStep } from './placementClient.js'
+import { nextStep } from './placementLogic.js'
 import { CHECKPOINTS } from './LessonPath.jsx'
 
-// Adaptive placement test. Instead of a fixed list of questions, an AI engine
-// (server-side, with a local binary-search fallback) looks at the student's
-// answers so far and decides which checkpoint to probe next — zeroing in on the
-// hardest thing they can do. When it has enough evidence it places the student
-// anywhere along the path by reporting `completedThrough`, and the app marks all
-// checkpoints up to there complete. Each question comes from a curated bank, so
-// the math is always correct; the AI only chooses *which* topic to ask.
+// Adaptive placement test. It walks the curriculum section by section (easiest
+// to hardest), asking two questions per section. You only advance past a section
+// if you clear both — so a single lucky answer can't fling you ahead — and you're
+// placed at the START of the first section you weren't solid on. The placement is
+// intentionally conservative: it's better to relearn a concept than skip it.
 
-const floorOf = (history) => {
-  const correct = history.filter((h) => h.correct).map((h) => h.checkpointIndex)
-  return correct.length ? Math.max(...correct) : -1
-}
+const topicFor = (cp) =>
+  CURRICULUM.find((c) => c.checkpointIndex === cp)?.topic || CHECKPOINTS[cp] || 'Question'
 
 export default function PlacementTest({ onExit }) {
-  const [phase, setPhase] = useState('thinking') // 'thinking' | 'question' | 'summary'
   const [history, setHistory] = useState([])
-  const [current, setCurrent] = useState(null) // { checkpointIndex, topic, section, question }
+  const [current, setCurrent] = useState(null) // { checkpointIndex, topic, question }
   const [choice, setChoice] = useState(null)
   const [locked, setLocked] = useState(false)
   const [wasCorrect, setWasCorrect] = useState(null)
-  const [placement, setPlacement] = useState(null) // { completedThrough, message, source }
-  const [engineSource, setEngineSource] = useState(null) // 'ai' | 'local'
-
-  const usedIds = useRef(new Set())
+  const [placement, setPlacement] = useState(null) // { completedThrough, sectionName }
   const started = useRef(false)
 
-  // Ask the engine what to do next given the running history.
-  const requestNext = async (hist) => {
-    setPhase('thinking')
-    const decision = await decideNextStep({ history: hist, curriculum: CURRICULUM })
-    setEngineSource(decision.source)
-
-    if (decision.action === 'place') {
-      setPlacement({
-        completedThrough: Number.isInteger(decision.completedThrough) ? decision.completedThrough : floorOf(hist),
-        message: decision.message,
-        source: decision.source,
-      })
-      setPhase('summary')
+  // Advance the section-gated engine given the running history.
+  const loadStep = (hist) => {
+    const step = nextStep(hist)
+    if (step.action === 'place') {
+      setPlacement(step)
+      setCurrent(null)
       return
     }
-
-    const meta = CURRICULUM.find((c) => c.checkpointIndex === decision.checkpointIndex)
-    const base = meta ? pickQuestion(decision.checkpointIndex, usedIds.current) : null
-    if (!meta || !base) {
-      // Nothing left to ask for this checkpoint — place at the current floor.
-      setPlacement({ completedThrough: floorOf(hist), source: decision.source })
-      setPhase('summary')
-      return
-    }
-
-    usedIds.current.add(base.id)
     setCurrent({
-      checkpointIndex: decision.checkpointIndex,
-      topic: meta.topic,
-      section: meta.section,
-      question: shuffleChoices(base),
+      checkpointIndex: step.checkpointIndex,
+      topic: topicFor(step.checkpointIndex),
+      question: shuffleChoices(pickQuestion(step.checkpointIndex)),
     })
     setChoice(null)
     setLocked(false)
     setWasCorrect(null)
-    setPhase('question')
   }
 
-  // Kick off the first probe once (guarded against StrictMode double-invoke).
   useEffect(() => {
     if (started.current) return
     started.current = true
-    requestNext([])
+    loadStep([])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -89,53 +60,18 @@ export default function PlacementTest({ onExit }) {
       { checkpointIndex: current.checkpointIndex, topic: current.topic, correct: wasCorrect },
     ]
     setHistory(next)
-    requestNext(next)
-  }
-
-  // Small badge that makes it obvious whether the live AI engine is driving the
-  // test or it has fallen back to the offline binary-search engine.
-  const engineBadge = engineSource && (
-    <p className={`placement-engine placement-engine--${engineSource}`}>
-      {engineSource === 'ai' ? 'Adaptive AI engine' : 'Offline fallback · no AI'}
-    </p>
-  )
-
-  // ---- Thinking / loading ----
-  if (phase === 'thinking') {
-    return (
-      <div className="app">
-        <header className="app__header app__header--lesson">
-          <h1>Placement test</h1>
-        </header>
-        <main className="order placement-thinking">
-          <OwlSpeech
-            tone="neutral"
-            text={
-              <strong>
-                {history.length === 0
-                  ? 'Let me find the right starting point for you…'
-                  : 'Nice — let me pick a good next question…'}
-              </strong>
-            }
-          />
-          <div className="placement-dots" aria-label="Thinking">
-            <span /><span /><span />
-          </div>
-        </main>
-      </div>
-    )
+    loadStep(next)
   }
 
   // ---- Summary / placement verdict ----
-  if (phase === 'summary') {
-    const ct = placement?.completedThrough ?? -1
-    const nextIdx = ct + 1
-    const startsAt = ct < 0 ? CHECKPOINTS[0] : CHECKPOINTS[nextIdx]
-    const defaultMsg =
+  if (placement) {
+    const ct = placement.completedThrough
+    const startsAt = ct < 0 ? CHECKPOINTS[0] : CHECKPOINTS[ct + 1]
+    const correctCount = history.filter((h) => h.correct).length
+    const message =
       ct < 0
-        ? "No worries at all — we'll start at the very beginning and build rock-solid foundations together."
-        : `You clearly know your stuff all the way through ${CHECKPOINTS[ct]}! I'll start you at ${startsAt} so you begin right where it gets interesting.`
-    const message = placement?.message || defaultMsg
+        ? "No worries at all — we'll start at the very beginning and build a rock-solid base together."
+        : `Based on how you did, I'm starting you at the beginning of ${placement.sectionName}. I'd rather firm up a concept than skip past it — you'll fly once the basics are solid!`
 
     return (
       <div className="app">
@@ -144,10 +80,10 @@ export default function PlacementTest({ onExit }) {
         </header>
         <div className="summary">
           <p className="summary__eyebrow">Placement complete</p>
-          {engineBadge}
           <div className="summary__score summary__score--pass">
             {ct < 0 ? 'Start' : `→ ${startsAt}`}
           </div>
+          <p className="summary__count">{correctCount} of {history.length} correct</p>
 
           {history.length > 0 && (
             <ul className="summary__list">
@@ -172,7 +108,8 @@ export default function PlacementTest({ onExit }) {
     )
   }
 
-  // ---- Question ----
+  if (!current) return null
+
   const question = current.question
   let tone = null
   let feedback = ''
@@ -190,12 +127,11 @@ export default function PlacementTest({ onExit }) {
       <div className="level-head">
         <p className="placement-count">Question {history.length + 1}</p>
         <h2>{current.topic}</h2>
-        {engineBadge}
       </div>
 
       <main className="order">
         <OwlSpeech
-          text={<strong>I'm picking questions based on your answers — just do your best!</strong>}
+          text={<strong>I'll work up through the topics — just answer honestly and do your best!</strong>}
           tone="neutral"
         />
 

@@ -1,17 +1,7 @@
 import { useState } from 'react'
-import AvatarOwl, { DEFAULT_AVATAR } from './AvatarOwl.jsx'
+import { DEFAULT_AVATAR } from './AvatarOwl.jsx'
+import AvatarEditor from './AvatarEditor.jsx'
 import { changePassword } from './auth.js'
-
-const SWATCHES = [
-  '#b78250', '#e8453c', '#ffd23c', '#ffffff', '#8ec5ff', '#f7a8c4',
-  '#a7de3c', '#c08bff', '#ff9f6b', '#7ad9c4', '#9aa7b5',
-]
-const ACCESSORIES = [
-  { key: 'none', label: 'None' },
-  { key: 'bow', label: 'Bow' },
-  { key: 'glasses', label: 'Glasses' },
-  { key: 'mustache', label: 'Mustache' },
-]
 
 export default function Settings({ username, canChangePassword = true, name, birthday, avatar, onSavePersonal, onSaveAvatar, onBack }) {
   // Personal info draft.
@@ -141,56 +131,7 @@ export default function Settings({ username, canChangePassword = true, name, bir
         <h2 className="settings__heading">Avatar</h2>
         <p className="settings__hint">This little owl shows up next to your name at the top.</p>
 
-        <div className="avatar-edit">
-          <div className="avatar-edit__preview">
-            <AvatarOwl avatar={draftAvatar} size={120} />
-          </div>
-
-          <div className="avatar-edit__controls">
-            <div className="field">
-              <span className="field__label">Body color</span>
-              <div className="avatar-edit__colors">
-                <input
-                  className="avatar-edit__picker"
-                  type="color"
-                  value={draftAvatar.color}
-                  onChange={(e) => setDraftAvatar((a) => ({ ...a, color: e.target.value }))}
-                  aria-label="Pick owl color"
-                />
-                <div className="avatar-edit__swatches">
-                  {SWATCHES.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      className={`avatar-edit__swatch ${
-                        draftAvatar.color.toLowerCase() === c.toLowerCase() ? 'avatar-edit__swatch--on' : ''
-                      }`}
-                      style={{ background: c }}
-                      onClick={() => setDraftAvatar((a) => ({ ...a, color: c }))}
-                      aria-label={`Use color ${c}`}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="field">
-              <span className="field__label">Accessory <span className="field__optional">(one at a time)</span></span>
-              <div className="avatar-edit__accessories">
-                {ACCESSORIES.map((acc) => (
-                  <button
-                    key={acc.key}
-                    type="button"
-                    className={`chip ${draftAvatar.accessory === acc.key ? 'chip--on' : ''}`}
-                    onClick={() => setDraftAvatar((a) => ({ ...a, accessory: acc.key }))}
-                  >
-                    {acc.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
+        <AvatarEditor value={draftAvatar} onChange={setDraftAvatar} />
 
         {avatarMsg && (
           <p className="settings__msg settings__msg--ok" role="status">

@@ -41,7 +41,7 @@ export default function Auth({ onAuthed }) {
       <div className="welcome__card">
         <div className="welcome__badge">algebruh</div>
         <p className="welcome__slogan">
-          Welcome to <strong>algebruh</strong> — where algebra is just a hoot away! 🦉
+          Welcome to <strong>algebruh</strong> — where algebra is just a hoot away!
         </p>
         <h1 className="welcome__title">{mode === 'signup' ? 'Create account' : 'Log in'}</h1>
 

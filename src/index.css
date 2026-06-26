@@ -2616,6 +2616,26 @@ body {
   gap: 0.85rem;
 }
 
+.welcome__avatar {
+  margin-top: 0.35rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--surface-2);
+  text-align: left;
+}
+
+.welcome__avatar-label {
+  margin: 0 0 0.75rem;
+  text-align: center;
+  font-weight: 800;
+  color: var(--text);
+}
+
+/* The shared avatar editor centers nicely inside the narrow welcome card. */
+.welcome__avatar .avatar-edit {
+  justify-content: center;
+  margin-bottom: 0;
+}
+
 .welcome__input {
   width: 100%;
   padding: 0.9rem 1rem;
