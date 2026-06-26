@@ -26,6 +26,7 @@ export default function PlacementTest({ onExit }) {
   const [locked, setLocked] = useState(false)
   const [wasCorrect, setWasCorrect] = useState(null)
   const [placement, setPlacement] = useState(null) // { completedThrough, message, source }
+  const [engineSource, setEngineSource] = useState(null) // 'ai' | 'local'
 
   const usedIds = useRef(new Set())
   const started = useRef(false)
@@ -34,6 +35,7 @@ export default function PlacementTest({ onExit }) {
   const requestNext = async (hist) => {
     setPhase('thinking')
     const decision = await decideNextStep({ history: hist, curriculum: CURRICULUM })
+    setEngineSource(decision.source)
 
     if (decision.action === 'place') {
       setPlacement({
@@ -90,6 +92,14 @@ export default function PlacementTest({ onExit }) {
     requestNext(next)
   }
 
+  // Small badge that makes it obvious whether the live AI engine is driving the
+  // test or it has fallen back to the offline binary-search engine.
+  const engineBadge = engineSource && (
+    <p className={`placement-engine placement-engine--${engineSource}`}>
+      {engineSource === 'ai' ? 'Adaptive AI engine' : 'Offline fallback · no AI'}
+    </p>
+  )
+
   // ---- Thinking / loading ----
   if (phase === 'thinking') {
     return (
@@ -134,6 +144,7 @@ export default function PlacementTest({ onExit }) {
         </header>
         <div className="summary">
           <p className="summary__eyebrow">Placement complete</p>
+          {engineBadge}
           <div className="summary__score summary__score--pass">
             {ct < 0 ? 'Start' : `→ ${startsAt}`}
           </div>
@@ -179,6 +190,7 @@ export default function PlacementTest({ onExit }) {
       <div className="level-head">
         <p className="placement-count">Question {history.length + 1}</p>
         <h2>{current.topic}</h2>
+        {engineBadge}
       </div>
 
       <main className="order">
