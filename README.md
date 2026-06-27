@@ -22,22 +22,22 @@ algebruh started as the single-topic "balance scale" vertical described in [`PRD
 - **Direct manipulation** — drag weights onto a balance scale to *feel* what "both sides are equal" means.
 - **Animated concept intros** — Bruh hops across each equation to show the rule before you practice it.
 - **A forgiving make-up flow** — miss a question and you make it up by getting it right 3 more times, so nobody advances on a concept they haven't mastered.
-- **An adaptive placement test** — a deterministic, section-gated engine places returning learners conservatively (it would rather have you re-learn than skip).
+- **An AI-adaptive placement test** — after each answer, the model (Hoot) chooses the next topic to quiz, confirming mastery by repetition; questions come from a vetted bank and a deterministic engine takes over if the model is unavailable. Placement is conservative (it would rather have you re-learn than skip).
 - **Bruh's Homework Help** — describe a problem you're stuck on and the AI tutor generates an animated walkthrough followed by interactive practice problems.
 
 ## Features
 
-- 🦉 **Bruh the owl** mascot with a customizable avatar (set during sign-up and in Settings).
-- 🧮 **Interactive balance scale** with touch-friendly drag-and-drop (`@dnd-kit`).
-- 📈 **Interactive coordinate graphs** for slope, intercepts, graphing, and systems.
-- ✍️ **Scratch whiteboard** (with undo/redo) on the harder multi-step lessons.
-- 🔁 **Make-up state machine** (`lib/useMakeup.js`) shared across every checkpoint.
-- 🧭 **Adaptive placement test** that morphs the learner's progress along the path.
-- 🤖 **AI homework help** — animated worked example + generated practice questions.
-- 🏁 **Final exam → graduation finale** — pass the 80% cumulative exam to walk the stage.
-- 📊 **Weekly activity graph** of daily correct answers.
-- 🔐 **Dual-mode auth** — local demo accounts *and* Firebase Google sign-in, sharing the same progress shape.
-- 💾 **Progress persistence** via `localStorage` (per local account / per Firebase `uid`).
+- **Bruh the owl** mascot with a customizable avatar (set during sign-up and in Settings).
+- **Interactive balance scale** with touch-friendly drag-and-drop (`@dnd-kit`).
+- **Interactive coordinate graphs** for slope, intercepts, graphing, and systems.
+- **Scratch whiteboard** (with undo/redo) on the harder multi-step lessons.
+- **Make-up state machine** (`lib/useMakeup.js`) shared across every checkpoint.
+- **Adaptive placement test** that morphs the learner's progress along the path.
+- **AI homework help** — animated worked example + generated practice questions.
+- **Final exam → graduation finale** — pass the 80% cumulative exam to walk the stage.
+- **Weekly activity graph** of daily correct answers.
+- **Dual-mode auth** — local demo accounts *and* Firebase Google sign-in, sharing the same progress shape.
+- **Progress persistence** via `localStorage` (per local account / per Firebase `uid`).
 
 ## Course map
 
@@ -54,7 +54,7 @@ algebruh started as the single-topic "balance scale" vertical described in [`PRD
 - **React 19** + **Vite 8** (mobile-first responsive UI)
 - **@dnd-kit** for touch drag-and-drop
 - **Firebase Auth** (Google sign-in)
-- **OpenAI** (server-side only) for Bruh's Homework Help
+- **OpenAI** (server-side only) for Bruh's Homework Help and the adaptive placement test
 - **GitHub Pages** for hosting (auto-deploy via GitHub Actions)
 - A serverless `api/homework` proxy (e.g. Vercel) for the AI feature
 
@@ -111,9 +111,10 @@ Copy `.env.example` → `.env.local`. All values are optional for a basic local 
 | Variable | Purpose |
 |---|---|
 | `VITE_FIREBASE_*` | Firebase web config that enables **Google sign-in**. Without it, only local demo accounts work. |
-| `OPENAI_API_KEY` | **Secret** (no `VITE_` prefix). Read only server-side by the homework proxy. Enables Bruh's Homework Help. |
+| `OPENAI_API_KEY` | **Secret** (no `VITE_` prefix). Read only server-side by the proxies. Enables Bruh's Homework Help and the AI-adaptive placement test. |
 | `OPENAI_MODEL` | Optional; defaults to `gpt-4o-mini`. |
 | `VITE_HOMEWORK_API_URL` | Full URL of a deployed `/api/homework` function. Needed when the host (like GitHub Pages) can't run serverless functions; leave blank to use the same-origin endpoint in dev. |
+| `VITE_PLACEMENT_API_URL` | Full URL of a deployed `/api/placement` function (same idea as above). If unreachable, placement falls back to the on-device engine. |
 
 See the comments in [`.env.example`](./.env.example) for full setup instructions, including Firebase authorized-domain configuration.
 
@@ -127,7 +128,7 @@ algebruh ships with **two auth modes** that share the same progress data shape:
 ## Deployment
 
 - **Frontend (GitHub Pages):** pushing to `main` triggers [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml), which builds with Vite (`base: /brilliant_clone/`), adds a `404.html` SPA fallback, and publishes to Pages.
-- **AI proxy (serverless):** `api/homework.js` is deployed to a serverless host (e.g. Vercel) with `OPENAI_API_KEY` set in that host's environment. The browser only ever calls `/api/homework`, never OpenAI directly, so the key stays secret.
+- **AI proxies (serverless):** `api/homework.js` and `api/placement.js` are deployed to a serverless host (e.g. Vercel) with `OPENAI_API_KEY` set in that host's environment. The browser only ever calls `/api/homework` and `/api/placement`, never OpenAI directly, so the key stays secret.
 
 ## Relationship to the PRD
 

@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { generateLesson } from './server/homework.js'
+import { decidePlacement } from './server/placement.js'
 
 // Local dev middleware that mirrors the production serverless functions under
 // /api/*. They read OPENAI_API_KEY from the (un-prefixed) env so the key stays
@@ -48,6 +49,9 @@ function apiPlugin(env) {
     configureServer(server) {
       handle(server, '/api/homework', (p) =>
         generateLesson({ problem: p.problem, apiKey: env.OPENAI_API_KEY, model: env.OPENAI_MODEL })
+      )
+      handle(server, '/api/placement', (p) =>
+        decidePlacement({ history: p.history, apiKey: env.OPENAI_API_KEY, model: env.OPENAI_MODEL })
       )
     },
   }

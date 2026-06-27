@@ -19,6 +19,20 @@ export const PLACEMENT_QUESTIONS = {
       correct: 0,
       explain: 'Add 3: 5x = 15, then divide by 5: x = 3.',
     },
+    {
+      id: 'p-solve-2',
+      prompt: 'Solve for x:  3x + 4 = 19',
+      options: ['x = 5', 'x = 7', 'x = 23/3', 'x = 15'],
+      correct: 0,
+      explain: 'Subtract 4: 3x = 15, then divide by 3: x = 5.',
+    },
+    {
+      id: 'p-solve-3',
+      prompt: 'Solve for x:  x/2 + 1 = 6',
+      options: ['x = 10', 'x = 14', 'x = 3.5', 'x = 12'],
+      correct: 0,
+      explain: 'Subtract 1: x/2 = 5, then multiply by 2: x = 10.',
+    },
   ],
   1: [
     {
@@ -46,6 +60,20 @@ export const PLACEMENT_QUESTIONS = {
       correct: 0,
       explain: '4·2x = 8x and 4·(−3) = −12, so 8x − 12.',
     },
+    {
+      id: 'p-distribute-2',
+      prompt: 'Expand:  −2(3x + 5)',
+      options: ['−6x − 10', '−6x + 10', '6x − 10', '−6x − 5'],
+      correct: 0,
+      explain: '−2·3x = −6x and −2·5 = −10, so −6x − 10.',
+    },
+    {
+      id: 'p-distribute-3',
+      prompt: 'Simplify:  3(x − 4) + 2x',
+      options: ['5x − 12', '5x − 4', '3x − 12', '5x + 12'],
+      correct: 0,
+      explain: 'Distribute: 3x − 12, then add 2x → 5x − 12.',
+    },
   ],
   4: [
     {
@@ -65,6 +93,20 @@ export const PLACEMENT_QUESTIONS = {
       options: ['(0, −6)', '(0, 2)', '(−6, 0)', '(0, 6)'],
       correct: 0,
       explain: 'At x = 0, y = −6, so the y-intercept is (0, −6).',
+    },
+    {
+      id: 'p-yint-2',
+      prompt: 'What is the y-intercept of  y = −3x + 4 ?',
+      options: ['(0, 4)', '(0, −3)', '(4, 0)', '(0, −4)'],
+      correct: 0,
+      explain: 'At x = 0, y = 4, so the y-intercept is (0, 4).',
+    },
+    {
+      id: 'p-yint-3',
+      prompt: 'A line crosses the y-axis at 7. What is its y-intercept?',
+      options: ['(0, 7)', '(7, 0)', '(0, −7)', '7x'],
+      correct: 0,
+      explain: 'Crossing the y-axis at 7 is the point (0, 7).',
     },
   ],
   7: [
@@ -92,6 +134,20 @@ export const PLACEMENT_QUESTIONS = {
       options: ['x = 2, y = 5', 'x = 5, y = 2', 'No solution', '(0, 0)'],
       correct: 0,
       explain: 'The solution of a system is the intersection point: x = 2, y = 5.',
+    },
+    {
+      id: 'p-sys-graph-2',
+      prompt: 'Two lines intersect at exactly one point, (−1, 3). How many solutions does the system have?',
+      options: ['Exactly one', 'None', 'Infinitely many', 'Two'],
+      correct: 0,
+      explain: 'A single intersection point means exactly one solution.',
+    },
+    {
+      id: 'p-sys-graph-3',
+      prompt: 'The lines  y = x + 1  and  y = x + 4  are parallel. What is the solution to the system?',
+      options: ['No solution', '(0, 1)', 'Infinitely many', '(1, 4)'],
+      correct: 0,
+      explain: 'Same slope, different intercepts → they never meet, so no solution.',
     },
   ],
   10: [
@@ -122,6 +178,20 @@ export const PLACEMENT_QUESTIONS = {
       correct: 0,
       explain: 'Multiplying like bases adds exponents: 5 + 2 = 7.',
     },
+    {
+      id: 'p-multpow-2',
+      prompt: 'Simplify:  x³ · x⁴',
+      options: ['x⁷', 'x¹²', 'x', '7x'],
+      correct: 0,
+      explain: 'Add the exponents: 3 + 4 = 7.',
+    },
+    {
+      id: 'p-multpow-3',
+      prompt: 'Simplify:  2³ · 2²',
+      options: ['2⁵', '2⁶', '4⁵', '2¹'],
+      correct: 0,
+      explain: 'Same base, so add exponents: 3 + 2 = 5 → 2⁵.',
+    },
   ],
   14: [
     {
@@ -149,6 +219,20 @@ export const PLACEMENT_QUESTIONS = {
       correct: 0,
       explain: 'Raise each factor: 2³ · x³ = 8x³.',
     },
+    {
+      id: 'p-prodpow-2',
+      prompt: 'Simplify:  (3y)²',
+      options: ['9y²', '6y²', '3y²', '9y'],
+      correct: 0,
+      explain: 'Raise each factor: 3² · y² = 9y².',
+    },
+    {
+      id: 'p-prodpow-3',
+      prompt: 'Simplify:  (x/2)³',
+      options: ['x³/8', 'x³/6', 'x/8', '3x/8'],
+      correct: 0,
+      explain: 'Cube the top and bottom: x³ / 2³ = x³/8.',
+    },
   ],
   17: [
     {
@@ -168,6 +252,20 @@ export const PLACEMENT_QUESTIONS = {
       options: ['3x² + 2x', '3x² + 4x', '2x² + 2x', '3x² − 2x'],
       correct: 0,
       explain: 'Combine like terms: 2x² + x² = 3x² and 3x − x = 2x.',
+    },
+    {
+      id: 'p-addpoly-2',
+      prompt: 'Add:  (x² + 4) + (3x² − 1)',
+      options: ['4x² + 3', '4x² + 5', '3x² + 3', '4x² − 3'],
+      correct: 0,
+      explain: 'x² + 3x² = 4x² and 4 − 1 = 3.',
+    },
+    {
+      id: 'p-addpoly-3',
+      prompt: 'Add:  (5x − 2) + (3x + 6)',
+      options: ['8x + 4', '8x − 4', '2x + 4', '8x + 8'],
+      correct: 0,
+      explain: '5x + 3x = 8x and −2 + 6 = 4.',
     },
   ],
   20: [
@@ -195,6 +293,20 @@ export const PLACEMENT_QUESTIONS = {
       options: ['(x + 2)(x + 3)', '(x + 1)(x + 6)', '(x − 2)(x − 3)', '(x + 5)(x + 1)'],
       correct: 0,
       explain: 'Two numbers multiplying to 6 and adding to 5: 2 and 3.',
+    },
+    {
+      id: 'p-factor-2',
+      prompt: 'Factor:  x² + 7x + 12',
+      options: ['(x + 3)(x + 4)', '(x + 2)(x + 6)', '(x + 1)(x + 12)', '(x + 5)(x + 2)'],
+      correct: 0,
+      explain: 'Need product 12 and sum 7: 3 and 4.',
+    },
+    {
+      id: 'p-factor-3',
+      prompt: 'Factor:  x² − x − 6',
+      options: ['(x − 3)(x + 2)', '(x + 3)(x − 2)', '(x − 6)(x + 1)', '(x − 2)(x − 3)'],
+      correct: 0,
+      explain: 'Need product −6 and sum −1: −3 and +2.',
     },
   ],
   23: [
@@ -253,21 +365,24 @@ export function pickQuestion(checkpointIndex, usedIds = new Set()) {
   return arr.find((q) => !usedIds.has(q.id)) || arr[0] || null
 }
 
-// Section-gated placement plan. The test walks these sections IN ORDER and asks
-// the `probes` (3 checkpoints spanning each section, easy → harder). Clearing a
-// section is a BEST-2-OF-3 vote, not all-or-nothing: you need 2 correct to
-// advance and 2 wrong to be placed at that section's start. That means no single
-// answer is ever decisive — one accidental misclick can't drop you a section, and
-// one lucky guess can't fling you ahead. You always (re)start at the beginning of
-// the first section you weren't solid on. (The engine stops early as soon as a
-// section is decided, so most sections take just 2 questions.)
+// Section-gated placement plan. The test walks these sections IN ORDER. Each
+// section probes a couple of representative `genres` (skill checkpoints — an
+// easier one and a harder one), and crucially it asks EACH genre more than once
+// to confirm real mastery before moving on:
+//   - 2 correct on a genre  → mastered, move to the next genre.
+//   - 2 wrong on a genre     → not mastered → placed at this section's start.
+//   - 1 correct / 1 wrong    → a 3rd tiebreaker question of the same genre.
+// So a single misclick never sinks you (you'd have to miss a topic twice), and a
+// lucky guess never advances you (you have to get a topic right twice). You always
+// (re)start at the beginning of the first section with a genre you hadn't mastered.
 //
 // `startCheckpoint` is the flat CHECKPOINTS index where the section begins; the
 // checkpoint just before it (a Review for later sections) is the last thing
-// marked complete when you place into that section.
+// marked complete when you place into that section. Each genre listed here must
+// have at least 3 questions in PLACEMENT_QUESTIONS (2 + a possible tiebreaker).
 export const PLACEMENT_SECTIONS = [
-  { name: 'Algebra Foundations', startCheckpoint: 0, probes: [0, 2, 4] },
-  { name: 'Graphs and Linear Relationships', startCheckpoint: 6, probes: [6, 8, 11] },
-  { name: 'Expressions with Exponents', startCheckpoint: 13, probes: [13, 15, 17] },
-  { name: 'Quadratics and Polynomials', startCheckpoint: 19, probes: [19, 22, 24] },
+  { name: 'Algebra Foundations', startCheckpoint: 0, genres: [0, 3] },
+  { name: 'Graphs and Linear Relationships', startCheckpoint: 6, genres: [6, 9] },
+  { name: 'Expressions with Exponents', startCheckpoint: 13, genres: [13, 16] },
+  { name: 'Quadratics and Polynomials', startCheckpoint: 19, genres: [19, 22] },
 ]

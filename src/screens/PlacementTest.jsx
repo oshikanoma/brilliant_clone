@@ -2,15 +2,17 @@ import { useEffect, useRef, useState } from 'react'
 import OwlSpeech from '../components/OwlSpeech.jsx'
 import { shuffleChoices } from '../lib/shuffleChoices.js'
 import { CURRICULUM, pickQuestion } from '../data/placementBank.js'
-import { nextStep } from '../lib/placementLogic.js'
+import { decideStep } from '../lib/placementClient.js'
 import { CHECKPOINTS } from './LessonPath.jsx'
 
-// Adaptive placement test. It walks the curriculum section by section (easiest
-// to hardest), judging each by a best-2-of-3 vote: you need 2 correct to advance
-// and 2 wrong to be held back, so no single answer (a misclick or a lucky guess)
-// can decide your placement. You're placed at the START of the first section you
-// weren't solid on. The placement is intentionally conservative: it's better to
-// relearn a concept than skip it.
+// Adaptive placement test. After each answer, an AI (Hoot) picks the next topic to
+// quiz — or decides you're ready to be placed — based on how you've done. The
+// questions themselves always come from our vetted bank (so answers are correct),
+// and the AI's choice is run through mastery guardrails: a topic must be proven by
+// repetition (right twice to pass, wrong twice to fail), it can't skip you ahead of
+// what you've mastered, and you're placed at the START of the first section you
+// weren't solid on. If the AI is unavailable, a deterministic engine takes over so
+// placement always works — it just won't be adaptive.
 
 const topicFor = (cp) =>
   CURRICULUM.find((c) => c.checkpointIndex === cp)?.topic || CHECKPOINTS[cp] || 'Question'
@@ -22,24 +24,33 @@ export default function PlacementTest({ onExit }) {
   const [locked, setLocked] = useState(false)
   const [wasCorrect, setWasCorrect] = useState(null)
   const [placement, setPlacement] = useState(null) // { completedThrough, sectionName }
+  const [thinking, setThinking] = useState(true) // Hoot is choosing the next step
+  const [engine, setEngine] = useState(null) // 'ai' | 'local'
   const started = useRef(false)
+  const usedIds = useRef(new Set()) // questions already shown, so genre repeats stay fresh
 
-  // Advance the section-gated engine given the running history.
-  const loadStep = (hist) => {
-    const step = nextStep(hist)
-    if (step.action === 'place') {
-      setPlacement(step)
+  // Ask the AI engine (with deterministic fallback) for the next step.
+  const loadStep = async (hist) => {
+    setThinking(true)
+    const { decision, source } = await decideStep(hist)
+    setEngine(source)
+    if (decision.action === 'place') {
+      setPlacement(decision)
       setCurrent(null)
+      setThinking(false)
       return
     }
+    const q = pickQuestion(decision.checkpointIndex, usedIds.current)
+    if (q) usedIds.current.add(q.id)
     setCurrent({
-      checkpointIndex: step.checkpointIndex,
-      topic: topicFor(step.checkpointIndex),
-      question: shuffleChoices(pickQuestion(step.checkpointIndex)),
+      checkpointIndex: decision.checkpointIndex,
+      topic: topicFor(decision.checkpointIndex),
+      question: shuffleChoices(q),
     })
     setChoice(null)
     setLocked(false)
     setWasCorrect(null)
+    setThinking(false)
   }
 
   useEffect(() => {
@@ -81,6 +92,9 @@ export default function PlacementTest({ onExit }) {
         </header>
         <div className="summary">
           <p className="summary__eyebrow">Placement complete</p>
+          {engine === 'ai' && (
+            <span className="placement-engine placement-engine--ai">Adapted by Hoot</span>
+          )}
           <div className="summary__score summary__score--pass">
             {ct < 0 ? 'Start' : `→ ${startsAt}`}
           </div>
@@ -109,6 +123,35 @@ export default function PlacementTest({ onExit }) {
     )
   }
 
+  // ---- Hoot is choosing the next question ----
+  if (thinking) {
+    return (
+      <div className="app">
+        <header className="app__header app__header--lesson">
+          <h1>Placement test</h1>
+        </header>
+        <main className="order placement-thinking">
+          <OwlSpeech
+            tone="neutral"
+            text={
+              <strong>
+                {history.length === 0
+                  ? "Let's find your starting point…"
+                  : 'Nice — let me pick your next one…'}
+              </strong>
+            }
+          />
+          <div className="placement-dots" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
+          <p className="lesson-hint">Hoot is adapting the test to how you're doing.</p>
+        </main>
+      </div>
+    )
+  }
+
   if (!current) return null
 
   const question = current.question
@@ -127,6 +170,9 @@ export default function PlacementTest({ onExit }) {
 
       <div className="level-head">
         <p className="placement-count">Question {history.length + 1}</p>
+        {engine === 'ai' && (
+          <span className="placement-engine placement-engine--ai">Adaptive · Hoot</span>
+        )}
         <h2>{current.topic}</h2>
       </div>
 
