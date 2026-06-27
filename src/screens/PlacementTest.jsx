@@ -6,10 +6,11 @@ import { nextStep } from '../lib/placementLogic.js'
 import { CHECKPOINTS } from './LessonPath.jsx'
 
 // Adaptive placement test. It walks the curriculum section by section (easiest
-// to hardest), asking two questions per section. You only advance past a section
-// if you clear both — so a single lucky answer can't fling you ahead — and you're
-// placed at the START of the first section you weren't solid on. The placement is
-// intentionally conservative: it's better to relearn a concept than skip it.
+// to hardest), judging each by a best-2-of-3 vote: you need 2 correct to advance
+// and 2 wrong to be held back, so no single answer (a misclick or a lucky guess)
+// can decide your placement. You're placed at the START of the first section you
+// weren't solid on. The placement is intentionally conservative: it's better to
+// relearn a concept than skip it.
 
 const topicFor = (cp) =>
   CURRICULUM.find((c) => c.checkpointIndex === cp)?.topic || CHECKPOINTS[cp] || 'Question'

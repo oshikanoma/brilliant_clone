@@ -254,18 +254,20 @@ export function pickQuestion(checkpointIndex, usedIds = new Set()) {
 }
 
 // Section-gated placement plan. The test walks these sections IN ORDER and asks
-// the `probes` (an easy + a harder checkpoint) for each. You only advance to the
-// next section if you got BOTH probes right; the moment a section isn't fully
-// cleared, that's where you're placed — so you can never "jump ahead" off a
-// single lucky answer, and you always (re)start at the beginning of the first
-// section you weren't solid on.
+// the `probes` (3 checkpoints spanning each section, easy → harder). Clearing a
+// section is a BEST-2-OF-3 vote, not all-or-nothing: you need 2 correct to
+// advance and 2 wrong to be placed at that section's start. That means no single
+// answer is ever decisive — one accidental misclick can't drop you a section, and
+// one lucky guess can't fling you ahead. You always (re)start at the beginning of
+// the first section you weren't solid on. (The engine stops early as soon as a
+// section is decided, so most sections take just 2 questions.)
 //
 // `startCheckpoint` is the flat CHECKPOINTS index where the section begins; the
 // checkpoint just before it (a Review for later sections) is the last thing
 // marked complete when you place into that section.
 export const PLACEMENT_SECTIONS = [
-  { name: 'Algebra Foundations', startCheckpoint: 0, probes: [0, 3] },
-  { name: 'Graphs and Linear Relationships', startCheckpoint: 6, probes: [6, 9] },
-  { name: 'Expressions with Exponents', startCheckpoint: 13, probes: [13, 16] },
-  { name: 'Quadratics and Polynomials', startCheckpoint: 19, probes: [19, 22] },
+  { name: 'Algebra Foundations', startCheckpoint: 0, probes: [0, 2, 4] },
+  { name: 'Graphs and Linear Relationships', startCheckpoint: 6, probes: [6, 8, 11] },
+  { name: 'Expressions with Exponents', startCheckpoint: 13, probes: [13, 15, 17] },
+  { name: 'Quadratics and Polynomials', startCheckpoint: 19, probes: [19, 22, 24] },
 ]
