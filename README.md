@@ -23,7 +23,8 @@ algebruh started as the single-topic "balance scale" vertical described in [`PRD
 - **Animated concept intros** — Bruh hops across each equation to show the rule before you practice it.
 - **A forgiving make-up flow** — miss a question and you make it up by getting it right 3 more times, so nobody advances on a concept they haven't mastered.
 - **An AI-adaptive placement test** — after each answer, the model (Hoot) chooses the next topic to quiz, confirming mastery by repetition; questions come from a vetted bank and a deterministic engine takes over if the model is unavailable. Placement is conservative (it would rather have you re-learn than skip).
-- **Bruh's Homework Help** — describe a problem you're stuck on and the AI tutor generates an animated walkthrough followed by interactive practice problems.
+- **Bruh's Homework Help** — describe a problem you're stuck on and Bruh builds an animated walkthrough followed by interactive practice. The AI's *only* job is to classify your question into one of the app's fixed skill families and write the encouraging voice text; **every practice problem, option, and answer key is generated and verified in code** (`src/lib/homeworkTemplates.js`), never authored by the model. The same "always-vetted" rule the placement test follows.
+- **An explicit AI toggle** in **Settings** — turn off "AI features" and the no-AI promise becomes verifiable in the app itself: the placement test runs fully on-device (no network call, no adaptive badge) and Homework Help is hidden. No data is sent to any AI service.
 
 ## Features
 
@@ -33,7 +34,7 @@ algebruh started as the single-topic "balance scale" vertical described in [`PRD
 - **Scratch whiteboard** (with undo/redo) on the harder multi-step lessons.
 - **Make-up state machine** (`lib/useMakeup.js`) shared across every checkpoint.
 - **Adaptive placement test** that morphs the learner's progress along the path.
-- **AI homework help** — animated worked example + generated practice questions.
+- **AI homework help** — animated worked example + code-verified practice questions (the model only routes you to the right skill family).
 - **Final exam → graduation finale** — pass the 80% cumulative exam to walk the stage.
 - **Weekly activity graph** of daily correct answers.
 - **Dual-mode auth** — local demo accounts *and* Firebase Google sign-in, sharing the same progress shape.

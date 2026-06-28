@@ -8,11 +8,17 @@
 // middleware, and in production when the app + functions share a host). On GitHub
 // Pages, set VITE_PLACEMENT_API_URL to the deployed function's full URL.
 import { nextStep } from './placementLogic.js'
+import { getAiEnabled } from './aiSettings.js'
 
 const ENDPOINT = import.meta.env.VITE_PLACEMENT_API_URL || '/api/placement'
 
 // Returns { decision, source: 'ai' | 'local' }.
 export async function decideStep(history) {
+  // Respect the user-facing AI toggle: when off, never hit the network — run the
+  // deterministic engine on-device so the no-AI gate is real and verifiable.
+  if (!getAiEnabled()) {
+    return { decision: nextStep(history), source: 'local' }
+  }
   try {
     const res = await fetch(ENDPOINT, {
       method: 'POST',

@@ -3,7 +3,7 @@ import { DEFAULT_AVATAR } from '../components/AvatarOwl.jsx'
 import AvatarEditor from '../components/AvatarEditor.jsx'
 import { changePassword } from '../lib/auth.js'
 
-export default function Settings({ username, canChangePassword = true, name, birthday, avatar, onSavePersonal, onSaveAvatar, onBack }) {
+export default function Settings({ username, canChangePassword = true, name, birthday, avatar, aiEnabled = true, onToggleAi, onSavePersonal, onSaveAvatar, onBack }) {
   // Personal info draft.
   const [draftName, setDraftName] = useState(name ?? '')
   const [draftBday, setDraftBday] = useState(birthday ?? '')
@@ -141,6 +141,35 @@ export default function Settings({ username, canChangePassword = true, name, bir
         <button className="btn" onClick={saveAvatar}>
           Save avatar
         </button>
+      </section>
+
+      <section className="settings__section">
+        <h2 className="settings__heading">AI features</h2>
+        <p className="settings__hint">
+          algebruh uses AI in just two places: the adaptive placement test (the model picks which topic to quiz
+          next) and Bruh’s Homework Help. Every practice problem and answer always comes from a code-verified bank —
+          never the model.
+        </p>
+
+        <label className="toggle">
+          <input
+            type="checkbox"
+            className="toggle__input"
+            checked={aiEnabled}
+            onChange={(e) => onToggleAi?.(e.target.checked)}
+          />
+          <span className="toggle__track" aria-hidden="true">
+            <span className="toggle__thumb" />
+          </span>
+          <span className="toggle__label">
+            <strong>{aiEnabled ? 'AI features are on' : 'AI features are off'}</strong>
+            <span className="settings__hint">
+              {aiEnabled
+                ? 'The placement test adapts with Hoot, and Homework Help is available.'
+                : 'The placement test runs fully on-device (no network calls), and Homework Help is hidden. No data is sent to any AI service.'}
+            </span>
+          </span>
+        </label>
       </section>
     </div>
   )

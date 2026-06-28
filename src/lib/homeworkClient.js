@@ -6,9 +6,14 @@
 // Defaults to same-origin /api/homework (works in local dev via the Vite
 // middleware, and in production when the app + functions share a host). On
 // GitHub Pages, set VITE_HOMEWORK_API_URL to the deployed function's full URL.
+import { getAiEnabled } from './aiSettings.js'
+
 const ENDPOINT = import.meta.env.VITE_HOMEWORK_API_URL || '/api/homework'
 
 export async function askBruh(problem) {
+  // Homework Help is an AI surface; honor the user-facing toggle. (The UI also
+  // hides the entry points when AI is off — this is the belt-and-suspenders.)
+  if (!getAiEnabled()) throw new Error('ai-disabled')
   let res
   try {
     res = await fetch(ENDPOINT, {

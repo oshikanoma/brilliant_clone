@@ -154,6 +154,10 @@ function LessonCard({ lesson }) {
 
       {practicing && lesson.problems?.length > 0 && (
         <div className="hw-problems">
+          <p className="hw-verified" title="These problems and answers are generated and checked in code, not written by the AI.">
+            <span className="hw-verified__check" aria-hidden="true">✓</span>
+            Answers verified by algebruh — generated from a code-checked bank, not the AI.
+          </p>
           {lesson.problems.map((p, i) => (
             <HwProblem key={i} problem={p} index={i} />
           ))}
@@ -170,7 +174,7 @@ function LessonCard({ lesson }) {
   )
 }
 
-export default function HomeworkHelp({ onBack }) {
+export default function HomeworkHelp({ aiEnabled = true, onBack }) {
   const [input, setInput] = useState('')
   const [pending, setPending] = useState(false)
   const [transcript, setTranscript] = useState([]) // { id, problem, lesson|null, error|null }
@@ -211,6 +215,33 @@ export default function HomeworkHelp({ onBack }) {
   }
 
   const empty = transcript.length === 0
+
+  if (!aiEnabled) {
+    return (
+      <div className="app hw">
+        <header className="app__header app__header--lesson">
+          <button className="back-btn" onClick={onBack} aria-label="Back to path">
+            ← Path
+          </button>
+          <h1>Bruh’s Homework Help</h1>
+        </header>
+        <main className="hw__main">
+          <div className="hw-hero">
+            <h2 className="hw-hero__title">AI features are turned off</h2>
+            <OwlSpeech
+              tone="neutral"
+              text={
+                <span>
+                  Homework Help uses AI to understand your question, so it’s paused right now. Flip
+                  <strong> AI features </strong> back on in <strong>Settings</strong> and I’ll be ready to help!
+                </span>
+              }
+            />
+          </div>
+        </main>
+      </div>
+    )
+  }
 
   return (
     <div className="app hw">

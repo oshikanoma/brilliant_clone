@@ -51,6 +51,7 @@ import { LEVELS as FINAL_EXAM_LEVELS } from './data/finalExamData.js'
 import Settings from './screens/Settings.jsx'
 import About from './screens/About.jsx'
 import HomeworkHelp from './screens/HomeworkHelp.jsx'
+import { getAiEnabled, setAiEnabled } from './lib/aiSettings.js'
 import AvatarOwl, { DEFAULT_AVATAR } from './components/AvatarOwl.jsx'
 import {
   getCurrentUser,
@@ -131,7 +132,7 @@ function StreakReward({ streak, onClose }) {
 // Light-green brand bar pinned to the top of every screen. The brand is a button
 // that returns home to the path; the hamburger opens a Settings/About/Log out
 // menu, and the user's avatar sits to the right of their name.
-function TopBar({ displayName, avatar, onNavigate, onLogout }) {
+function TopBar({ displayName, avatar, aiEnabled = true, onNavigate, onLogout }) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -172,17 +173,19 @@ function TopBar({ displayName, avatar, onNavigate, onLogout }) {
             <>
               <div className="topbar__backdrop" onClick={() => setOpen(false)} />
               <div className="menu" role="menu">
-                <button
-                  type="button"
-                  className="menu__item"
-                  role="menuitem"
-                  onClick={() => {
-                    setOpen(false)
-                    onNavigate('homework')
-                  }}
-                >
-                  Bruh’s Homework Help
-                </button>
+                {aiEnabled && (
+                  <button
+                    type="button"
+                    className="menu__item"
+                    role="menuitem"
+                    onClick={() => {
+                      setOpen(false)
+                      onNavigate('homework')
+                    }}
+                  >
+                    Bruh’s Homework Help
+                  </button>
+                )}
                 <button
                   type="button"
                   className="menu__item"
@@ -252,6 +255,15 @@ function Session({ username, defaultName = '', isGoogle = false, onLogout }) {
   // Correct answers tallied per local day (dayIndex -> count), powering the
   // weekly activity bar graph on the path.
   const [dailyCorrect, setDailyCorrect] = useState(saved?.dailyCorrect ?? {})
+  // User-facing AI gate (app-wide, in localStorage). When off, placement runs
+  // on-device and Homework Help is hidden. Mirrors to the shared aiSettings
+  // module so the plain client modules can read it synchronously.
+  const [aiEnabled, setAiEnabledState] = useState(() => getAiEnabled())
+  const toggleAi = (on) => {
+    setAiEnabled(on)
+    setAiEnabledState(on)
+    if (!on && screen === 'homework') setScreen('path')
+  }
 
   // Persist this user's session on every meaningful change.
   useEffect(() => {
@@ -398,7 +410,7 @@ function Session({ username, defaultName = '', isGoogle = false, onLogout }) {
           setCheckpoint(index)
           setScreen('lesson')
         }}
-        onHomework={() => setScreen('homework')}
+        onHomework={aiEnabled ? () => setScreen('homework') : undefined}
       />
     )
   } else if (screen === 'paint') {
@@ -411,6 +423,8 @@ function Session({ username, defaultName = '', isGoogle = false, onLogout }) {
         name={name}
         birthday={birthday}
         avatar={avatar}
+        aiEnabled={aiEnabled}
+        onToggleAi={toggleAi}
         onSavePersonal={({ name: n, birthday: b }) => {
           setName(n)
           setBirthday(b)
@@ -422,7 +436,7 @@ function Session({ username, defaultName = '', isGoogle = false, onLogout }) {
   } else if (screen === 'about') {
     screenEl = <About onBack={() => setScreen('path')} />
   } else if (screen === 'homework') {
-    screenEl = <HomeworkHelp onBack={() => setScreen('path')} />
+    screenEl = <HomeworkHelp aiEnabled={aiEnabled} onBack={() => setScreen('path')} />
   } else if (checkpoint === 1) {
     screenEl = <OrderLesson {...lessonProps} />
   } else if (checkpoint === 2) {
@@ -559,6 +573,7 @@ function Session({ username, defaultName = '', isGoogle = false, onLogout }) {
       <TopBar
         displayName={name || defaultName || username}
         avatar={avatar}
+        aiEnabled={aiEnabled}
         onNavigate={setScreen}
         onLogout={onLogout}
       />
