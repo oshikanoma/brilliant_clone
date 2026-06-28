@@ -422,6 +422,54 @@ export function isTemplate(id) {
   return Object.prototype.hasOwnProperty.call(TEMPLATE_MAP, id)
 }
 
+// Normalize a loosely-formatted id (hyphens/spaces/casing) to a known id, or ''.
+export function normalizeTemplateId(raw) {
+  const id = String(raw || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_')
+  return isTemplate(id) ? id : ''
+}
+
+// Deterministic keyword fallback: guess the best template from the student's raw
+// words. Used when the model returns "none" or an unknown id, so an ordinary
+// algebra question still gets a real, verified lesson instead of an empty reply.
+// Ordered most-specific first; first match wins.
+const KEYWORD_RULES = [
+  ['difference_of_squares', [/difference of squares/, /x\^?2\s*-\s*\d/, /a\^?2\s*-\s*b\^?2/]],
+  ['perfect_square', [/perfect square/, /\(\s*x\s*[+-].*\)\s*\^?\s*2/, /square (a|the) binomial/]],
+  ['power_of_power', [/power (of|to) a power/, /\)\s*\^/, /raise.*exponent.*exponent/]],
+  ['power_of_product', [/power of a product/, /\(\s*\d*\s*x\s*\)\s*\^/]],
+  ['negative_exponent', [/negative exponent/, /zero exponent/, /reciprocal/, /flip.*fraction/]],
+  ['multiply_powers', [/multiply.*(power|exponent)/, /product of powers/, /add(ing)? (the )?exponent/, /x\^?\d+\s*\*\s*x\^?\d+/]],
+  ['divide_powers', [/divid.*(power|exponent)/, /quotient of powers/, /subtract.*exponent/, /x\^?\d+\s*\/\s*x\^?\d+/]],
+  ['multiply_binomials', [/foil/, /multiply.*binomial/, /\(\s*x\s*[+-].*\)\s*\(\s*x\s*[+-]/]],
+  ['subtract_polynomials', [/subtract.*polynomial/, /distribut.*(minus|negative)/]],
+  ['add_polynomials', [/add.*polynomial/, /combine.*polynomial/]],
+  ['factor_trinomial', [/factor/, /trinomial/]],
+  ['slope_intercept', [/slope/, /y[\s-]*intercept/, /\bintercept\b/, /y\s*=\s*mx/, /gradient/]],
+  ['distribute', [/distribut/, /expand.*\(/, /parenthes/]],
+  ['combine_like_terms', [/like terms/, /combine/, /simplify/]],
+  ['evaluate', [/evaluate/, /plug ?in/, /substitut/, /value of the expression/, /when x\s*=/]],
+  ['two_step_equation', [/two[\s-]*step/, /\bsolve\b/, /\bequation\b/, /\d*x\b.*=|=.*\d*x\b/]],
+  ['one_step_equation', [/one[\s-]*step/]],
+  // Generic algebra catch-alls (lowest priority) so broad topics still land
+  // somewhere sensible rather than returning nothing.
+  ['multiply_powers', [/exponent/, /\bpowers?\b/]],
+  ['factor_trinomial', [/quadratic/]],
+  ['add_polynomials', [/polynomial/]],
+  ['slope_intercept', [/\bline\b/, /\bgraph/, /linear/]],
+]
+
+export function classifyText(text) {
+  const t = String(text || '').toLowerCase()
+  if (!t.trim()) return ''
+  for (const [id, patterns] of KEYWORD_RULES) {
+    if (patterns.some((re) => re.test(t))) return id
+  }
+  return ''
+}
+
 // Generate verified content for a template: a worked example (walkthrough) plus
 // `count` practice problems of increasing difficulty. Returns null for unknown ids.
 export function generateProblemSet(templateId, { seed, count = 3 } = {}) {
