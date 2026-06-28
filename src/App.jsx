@@ -132,7 +132,7 @@ function StreakReward({ streak, onClose }) {
 // Light-green brand bar pinned to the top of every screen. The brand is a button
 // that returns home to the path; the hamburger opens a Settings/About/Log out
 // menu, and the user's avatar sits to the right of their name.
-function TopBar({ displayName, avatar, aiEnabled = true, onNavigate, onLogout }) {
+function TopBar({ displayName, avatar, onNavigate, onLogout }) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -173,19 +173,6 @@ function TopBar({ displayName, avatar, aiEnabled = true, onNavigate, onLogout })
             <>
               <div className="topbar__backdrop" onClick={() => setOpen(false)} />
               <div className="menu" role="menu">
-                {aiEnabled && (
-                  <button
-                    type="button"
-                    className="menu__item"
-                    role="menuitem"
-                    onClick={() => {
-                      setOpen(false)
-                      onNavigate('homework')
-                    }}
-                  >
-                    Bruh’s Homework Help
-                  </button>
-                )}
                 <button
                   type="button"
                   className="menu__item"
@@ -387,7 +374,11 @@ function Session({ username, defaultName = '', isGoogle = false, onLogout }) {
     )
   } else if (screen === 'placement') {
     screenEl = (
-      <PlacementTest onExit={(completedThrough) => applyPlacement(completedThrough)} />
+      <PlacementTest
+        aiEnabled={aiEnabled}
+        onToggleAi={toggleAi}
+        onExit={(completedThrough) => applyPlacement(completedThrough)}
+      />
     )
   } else if (screen === 'path') {
     screenEl = (
@@ -573,7 +564,6 @@ function Session({ username, defaultName = '', isGoogle = false, onLogout }) {
       <TopBar
         displayName={name || defaultName || username}
         avatar={avatar}
-        aiEnabled={aiEnabled}
         onNavigate={setScreen}
         onLogout={onLogout}
       />

@@ -1,9 +1,6 @@
 import AvatarOwl from './AvatarOwl.jsx'
+import ColorPicker from './ColorPicker.jsx'
 
-const SWATCHES = [
-  '#b78250', '#e8453c', '#ffd23c', '#ffffff', '#8ec5ff', '#f7a8c4',
-  '#a7de3c', '#c08bff', '#ff9f6b', '#7ad9c4', '#9aa7b5',
-]
 const ACCESSORIES = [
   { key: 'none', label: 'None' },
   { key: 'bow', label: 'Bow' },
@@ -26,29 +23,7 @@ export default function AvatarEditor({ value, onChange, previewSize = 120 }) {
       <div className="avatar-edit__controls">
         <div className="field">
           <span className="field__label">Body color</span>
-          <div className="avatar-edit__colors">
-            <input
-              className="avatar-edit__picker"
-              type="color"
-              value={value.color}
-              onChange={(e) => set({ color: e.target.value })}
-              aria-label="Pick owl color"
-            />
-            <div className="avatar-edit__swatches">
-              {SWATCHES.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  className={`avatar-edit__swatch ${
-                    value.color.toLowerCase() === c.toLowerCase() ? 'avatar-edit__swatch--on' : ''
-                  }`}
-                  style={{ background: c }}
-                  onClick={() => set({ color: c })}
-                  aria-label={`Use color ${c}`}
-                />
-              ))}
-            </div>
-          </div>
+          <ColorPicker value={value.color} onChange={(color) => set({ color })} />
         </div>
 
         <div className="field">

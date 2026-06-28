@@ -24,7 +24,7 @@ algebruh started as the single-topic "balance scale" vertical described in [`PRD
 - **A forgiving make-up flow** — miss a question and you make it up by getting it right 3 more times, so nobody advances on a concept they haven't mastered.
 - **An AI-adaptive placement test** — after each answer, the model (Hoot) chooses the next topic to quiz, confirming mastery by repetition; questions come from a vetted bank and a deterministic engine takes over if the model is unavailable. Placement is conservative (it would rather have you re-learn than skip).
 - **Bruh's Homework Help** — describe a problem you're stuck on and Bruh builds an animated walkthrough followed by interactive practice. The AI's *only* job is to classify your question into one of the app's fixed skill families and write the encouraging voice text; **every practice problem, option, and answer key is generated and verified in code** (`src/lib/homeworkTemplates.js`), never authored by the model. The same "always-vetted" rule the placement test follows.
-- **An explicit AI toggle** in **Settings** — turn off "AI features" and the no-AI promise becomes verifiable in the app itself: the placement test runs fully on-device (no network call, no adaptive badge) and Homework Help is hidden. No data is sent to any AI service.
+- **An explicit AI toggle** — surfaced both in **Settings** and as a live status light right below each placement-test question (green = AI connected and adapting, amber = on but offline, grey = off). Tap it to flip AI on/off; when off, the placement test runs fully on-device and Homework Help is hidden. No data is sent to any AI service, making the no-AI promise verifiable directly in the app.
 
 ## Features
 

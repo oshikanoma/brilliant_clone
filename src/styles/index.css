@@ -449,42 +449,6 @@
   min-width: 210px;
 }
 
-.avatar-edit__colors {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.avatar-edit__picker {
-  width: 46px;
-  height: 38px;
-  padding: 0;
-  border: 2px solid var(--line);
-  border-radius: 10px;
-  background: #ffffff;
-  cursor: pointer;
-}
-
-.avatar-edit__swatches {
-  display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-}
-
-.avatar-edit__swatch {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: 2px solid rgba(0, 0, 0, 0.15);
-  cursor: pointer;
-}
-
-.avatar-edit__swatch--on {
-  border-color: var(--text);
-  box-shadow: 0 0 0 2px #ffffff inset;
-}
-
 .avatar-edit__accessories {
   display: flex;
   gap: 0.5rem;
@@ -2127,6 +2091,87 @@ body {
 .placement-engine--local {
   color: #9a6a00;
   background: rgba(255, 180, 84, 0.22);
+}
+
+/* The "AI gate": a clickable status light sitting right below the question text
+   that shows whether the AI is connected and lets you toggle it on/off. */
+.aigate {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  margin: 0.1rem 0 0.2rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 12px;
+  border: 1.5px solid var(--surface-2);
+  background: #fff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.aigate__dot {
+  flex: 0 0 auto;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #c4c0b6;
+}
+
+.aigate__text {
+  flex: 1 1 auto;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.aigate__switch {
+  flex: 0 0 auto;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+/* AI on and reachable: green, "connected" */
+.aigate--on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.aigate--on .aigate__dot {
+  background: var(--accent-dark);
+  box-shadow: 0 0 0 3px rgba(167, 222, 60, 0.35);
+}
+.aigate--on .aigate__text {
+  color: var(--accent-dark);
+}
+
+/* AI on but offline (fell back to on-device): amber */
+.aigate--offline {
+  border-color: #ffcf85;
+  background: rgba(255, 180, 84, 0.14);
+}
+.aigate--offline .aigate__dot {
+  background: #e89c1c;
+  box-shadow: 0 0 0 3px rgba(255, 180, 84, 0.3);
+}
+.aigate--offline .aigate__text {
+  color: #9a6a00;
+}
+
+/* AI off: grey, fully on-device */
+.aigate--off {
+  border-color: var(--surface-2);
+}
+
+.aigate:focus-visible {
+  outline: 3px solid var(--accent-dark);
+  outline-offset: 2px;
 }
 
 .placement-thinking {

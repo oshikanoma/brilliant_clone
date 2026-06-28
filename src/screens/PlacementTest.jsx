@@ -17,7 +17,7 @@ import { CHECKPOINTS } from './LessonPath.jsx'
 const topicFor = (cp) =>
   CURRICULUM.find((c) => c.checkpointIndex === cp)?.topic || CHECKPOINTS[cp] || 'Question'
 
-export default function PlacementTest({ onExit }) {
+export default function PlacementTest({ aiEnabled = true, onToggleAi, onExit }) {
   const [history, setHistory] = useState([])
   const [current, setCurrent] = useState(null) // { checkpointIndex, topic, question }
   const [choice, setChoice] = useState(null)
@@ -170,9 +170,6 @@ export default function PlacementTest({ onExit }) {
 
       <div className="level-head">
         <p className="placement-count">Question {history.length + 1}</p>
-        {engine === 'ai' && (
-          <span className="placement-engine placement-engine--ai">Adaptive · Hoot</span>
-        )}
         <h2>{current.topic}</h2>
       </div>
 
@@ -185,6 +182,26 @@ export default function PlacementTest({ onExit }) {
         <div className="review-q" aria-label="Question">
           {question.prompt}
         </div>
+
+        <button
+          type="button"
+          className={
+            'aigate aigate--' + (aiEnabled ? (engine === 'local' ? 'offline' : 'on') : 'off')
+          }
+          onClick={() => onToggleAi?.(!aiEnabled)}
+          aria-pressed={aiEnabled}
+          title="Turn the AI adaptation on or off. When off, the test runs fully on your device."
+        >
+          <span className="aigate__dot" aria-hidden="true" />
+          <span className="aigate__text">
+            {aiEnabled
+              ? engine === 'local'
+                ? 'AI on — offline right now, using on-device picks'
+                : 'AI connected — Hoot is adapting to you'
+              : 'AI off — running fully on-device'}
+          </span>
+          <span className="aigate__switch">{aiEnabled ? 'Turn off' : 'Turn on'}</span>
+        </button>
 
         <div className="choices" role="group" aria-label="Choose the answer">
           {question.options.map((opt, i) => {
